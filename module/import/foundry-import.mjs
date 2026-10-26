@@ -126,8 +126,9 @@ export function creatureToActor(c) {
 }
 
 /**
- * A plan table (table-plan.mjs) as RollTable data. Each result shows its table's label in
- * bold, so a master table's chat card says which sub-table gave each line.
+ * A plan table (table-plan.mjs) as RollTable data. A result has the row text only; its table's
+ * label goes in a flag that SLTableResult#getHTML shows on chat cards, so a master table's card
+ * says which sub-table gave each line. (A label in `name` repeats on every row of the sheet.)
  * @param {object} t
  * @param {(link: object) => string|null} resolveLink  Item or journal page UUID for a link.
  */
@@ -136,7 +137,7 @@ export function planTableToDocument(t, resolveLink = () => null) {
     name: t.name, formula: t.formula, replacement: true, displayRoll: true, description: esc(t.description ?? ""),
     results: t.results.map(r => {
       const uuid = r.link ? resolveLink(r.link) : null;
-      const base = { name: r.label, description: esc(r.text), range: r.range, weight: r.range[1] - r.range[0] + 1 };
+      const base = { name: "", description: esc(r.text), range: r.range, weight: r.range[1] - r.range[0] + 1, flags: { [SYSTEM]: { label: r.label } } };
       return uuid ? { ...base, type: "document", documentUuid: uuid } : { ...base, type: "text" };
     })
   };

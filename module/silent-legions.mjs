@@ -4,7 +4,7 @@
 import { SL } from "./config.mjs";
 import { CharacterData, NpcData } from "./data/actors.mjs";
 import * as ItemModels from "./data/items.mjs";
-import { SLActor, SLItem, SLCombatant } from "./documents.mjs";
+import { SLActor, SLItem, SLCombatant, SLTableResult } from "./documents.mjs";
 import { SLCharacterSheet, SLNpcSheet, SLItemSheet, defaultItemIcon } from "./sheets.mjs";
 import { SLImportApp } from "./apps/import-app.mjs";
 import * as Rolls from "./rolls.mjs";
@@ -18,6 +18,7 @@ Hooks.once("init", () => {
   CONFIG.Actor.documentClass = SLActor;
   CONFIG.Item.documentClass = SLItem;
   CONFIG.Combatant.documentClass = SLCombatant;
+  CONFIG.TableResult.documentClass = SLTableResult;
   CONFIG.Combat.initiative = { formula: "1d8", decimals: 0 };
 
   CONFIG.Actor.dataModels = { character: CharacterData, npc: NpcData };

@@ -86,13 +86,14 @@ The importer builds these world compendiums, in the compendium folder "Silent Le
 The book builds its generators by rolling several tables together ("roll one of each type of
 die") or by letting one table pick the next. The **SL: Random Tables** compendium has master
 tables that do this for you. Draw one with Foundry's normal **Roll** button; Foundry rolls every
-sub-table and shows each line with the name of its table.
+sub-table and shows each line with the name of its table. (The table sheet shows only the
+result text.)
 
 | Folder | Contents |
 |---|---|
 | Generators | 22 complete generators: Dark Sorcery, Pantheon, Outer God, Lovecraftian Name, Alien Race, Kelipah, Cult, Cult Name, Magical Weapon, Protective Artifact, Miscellaneous Artifact, Occult Grimoire, Adventure Template, Extra Scenes, Scene Challenge, One-Roll Actor, One-Roll Crime, Monster Twist, Poison, Secret Adept, Dark Vision, Mythos Aberration |
 | Generator Steps | 38 parts of the generators, usable alone, for example "Cult: Roots of the Evil", "Alien: Physical Form", or "It Curses a Target (effect and word)" |
-| Book parts (Creating Gods, Creating Cults, …) | The book tables |
+| Book parts (Creating Gods, Creating Cults, …) | The book tables. Each name starts with its book section, for example "Grim Histories: How Long Have They Been Here?" |
 
 Two kinds of master table:
 

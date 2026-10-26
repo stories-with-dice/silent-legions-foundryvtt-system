@@ -51,11 +51,17 @@ const ONE_ROLL_SETS = {
 
 const slug = s => String(s).toLowerCase().replace(/['’]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 const label = name => String(name).split(": ").pop();
+/** "Grim Histories: How Long Have They Been Here?". A part heading gives only its first half ("Creating Gods"). */
+const withSection = (section, name) => {
+  const prefix = String(section ?? "").split(": ")[0];
+  return !prefix || name.toLowerCase().startsWith(prefix.toLowerCase()) ? name : `${prefix}: ${name}`;
+};
 
 /**
  * @param {object} data  Output of parseBook().
  * @returns {{tables: object[], masters: object[], warnings: string[]}}
- *   tables:  { id, name, label, folder, formula, description, results: [{ range, label, text, link? }] }
+ *   tables:  { id, name, bookName, label, folder, formula, description, results: [{ range, label, text, link? }] }
+ *            `name` is the book name with its section in front; master tables find tables by `bookName`.
  *   masters: { id, name, folder, top, description, formula, results: [{ range, label, text?, ref }] }
  *            `ref` is the id of a table or of an earlier master. Masters come leaves first.
  *   link:    { kind: "background" | "delirium" | "spell" | "tag", name } — the importer turns it into a document link.
@@ -67,8 +73,8 @@ export function buildTablePlan(data) {
   const masters = [];
   const masterIds = new Set();
 
-  const addTable = t => {
-    const table = { id: `t-${slug(t.name)}`, label: label(t.name), ...t };
+  const addTable = ({ section, ...t }) => {
+    const table = { id: `t-${slug(t.name)}`, label: label(t.name), ...t, name: withSection(section, t.name), bookName: t.name };
     tables.push(table);
     byName.set(t.name, table);
     return table;
@@ -78,7 +84,7 @@ export function buildTablePlan(data) {
   for (const t of data.tables ?? []) {
     const link = t.name === "Background" ? "background" : t.name === "Location Tags: Tag" ? "tag" : null;
     addTable({
-      name: t.name, folder: folderOf(t), formula: t.formula,
+      name: t.name, section: t.section, folder: folderOf(t), formula: t.formula,
       description: [t.section, t.page ? `Silent Legions p. ${t.page - 3}` : ""].filter(Boolean).join(" · "),
       results: t.results.map(r => ({
         range: r.range, label: label(t.name), text: r.text,
@@ -90,13 +96,13 @@ export function buildTablePlan(data) {
   // Tables the book gives as text or lists.
   if (byName.has("Modes and Epithets: Create")) {
     addTable({
-      name: "Deity Mode", folder: "Creating Gods", formula: "1d4", description: "Portfolios and Modes: pick a mode, then an epithet",
+      name: "Deity Mode", section: "Portfolios and Modes", folder: "Creating Gods", formula: "1d4", description: "Portfolios and Modes: pick a mode, then an epithet",
       results: MODES.map((m, i) => ({ range: [i + 1, i + 1], label: "Mode", text: m }))
     });
   }
   if (data.deliria?.length) {
     addTable({
-      name: "Sample Deliria", folder: "Character Creation", formula: `1d${data.deliria.length}`, description: "Madness: Sample Deliria",
+      name: "Sample Deliria", section: "Madness", folder: "Character Creation", formula: `1d${data.deliria.length}`, description: "Madness: Sample Deliria",
       results: data.deliria.map((d, i) => ({ range: [i + 1, i + 1], label: "Delirium", text: d.name, link: { kind: "delirium", name: d.name } }))
     });
   }
@@ -111,14 +117,14 @@ export function buildTablePlan(data) {
   if (spellLevels.length === 5) {
     // Occult Grimoires: "1-3 is first level, 4-6 is second level, 7-8 is third level, 9 is fourth level, and 10 is fifth level."
     addTable({
-      name: "Grimoire Spell Level", folder: "Creating Artifacts", formula: "1d10", description: "Occult Grimoires: level of each spell in the book",
+      name: "Grimoire Spell Level", section: "Occult Grimoires", folder: "Creating Artifacts", formula: "1d10", description: "Occult Grimoires: level of each spell in the book",
       results: [[1, 3, 1], [4, 6, 2], [7, 8, 3], [9, 9, 4], [10, 10, 5]].map(([lo, hi, l]) => ({ range: [lo, hi], label: "Spell level", text: `Level ${l}` }))
     });
   }
 
   // The book asks the GM to pick these; a 1dN table lets the GM roll instead.
   const choice = (name, folder, labelText, options) => addTable({
-    name, folder, formula: `1d${options.length}`, description: "Pick one, or roll",
+    name, section: "Building a Template", folder, formula: `1d${options.length}`, description: "Pick one, or roll",
     results: options.map((o, i) => ({ range: [i + 1, i + 1], label: labelText, text: o }))
   });
   choice("Resolution Kind", "Creating Adventure Templates", "Resolution", ["Time-sensitive", "No time pressure"]);

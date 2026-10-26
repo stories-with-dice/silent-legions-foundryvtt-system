@@ -104,3 +104,7 @@
 .sl-card .sl-card-desc { max-height: 12rem; overflow-y: auto; font-size: 12px; }
 .sl-card .sl-paid { font-style: italic; }
 .sl-note { font-style: italic; }
+
+/* Drawn table results: the sub-table label above the result text. */
+.table-results .sl-table-result { flex: 1; }
+.table-results .sl-table-label { font-size: 11px; font-weight: bold; color: var(--color-text-subtle, #777); }

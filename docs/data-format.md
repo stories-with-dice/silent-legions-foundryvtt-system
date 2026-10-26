@@ -43,7 +43,7 @@ Notes:
 
 | Key | Contents |
 |---|---|
-| `tables` | `{ id, name, label, folder, formula, description, results[{ range, label, text, link? }] }`: the book tables plus helper tables (Deity Mode, Sample Deliria, Spells: Level N, Grimoire Spell Level, Resolution Kind, Investigation Kind, Challenge Kind) |
+| `tables` | `{ id, name ("<section>: <book name>"), bookName, label, folder, formula, description, results[{ range, label, text, link? }] }`: the book tables plus helper tables (Deity Mode, Sample Deliria, Spells: Level N, Grimoire Spell Level, Resolution Kind, Investigation Kind, Challenge Kind) |
 | `masters` | `{ id, name, folder, top, kind ("all" or "branch"), description, formula, results[{ range, label, text?, ref }] }`, leaves first. `ref` is a table or master `id` |
 | `warnings` | Master tables or rows whose sub-table was not found |
 

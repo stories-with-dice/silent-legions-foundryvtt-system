@@ -101,3 +101,17 @@ export class SLCombatant extends Combatant {
     return this.actor?.type === "character" ? "1d8 + @init" : "1d8";
   }
 }
+
+export class SLTableResult extends TableResult {
+  /**
+   * Chat card text for a drawn result. Imported results carry their table's label in the flag
+   * `silent-legions.label`, so a master table's card says which sub-table gave each line.
+   * The table sheet does not call this, so its rows show the result text only.
+   */
+  async getHTML() {
+    const html = await super.getHTML();
+    const label = this.getFlag("silent-legions", "label");
+    if (!label) return html;
+    return `<div class="sl-table-result"><div class="sl-table-label">${foundry.utils.escapeHTML(label)}</div>${html}</div>`;
+  }
+}
