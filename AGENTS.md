@@ -11,7 +11,7 @@ Rules for AI agents and contributors. The user guide is [README.md](README.md).
 - **Foundry v13 APIs only**: `TypeDataModel`, `ActorSheetV2`/`ItemSheetV2` with
   `HandlebarsApplicationMixin`, `DialogV2`, the `renderChatMessageHTML` hook.
 - **The parser files stay environment-free.** `module/import/pdf-extract.mjs`,
-  `module/import/sl-parser.mjs`, and `module/import/keeper-pack.mjs` must not use Foundry or Node
+  `module/import/sl-parser.mjs`, `module/import/table-plan.mjs`, and `module/import/keeper-pack.mjs` must not use Foundry or Node
   globals. The browser (Foundry) and the CLI (Node) run the same code and must give byte-identical
   data (checked by hashing the JSON in both).
 
@@ -31,6 +31,7 @@ Rules for AI agents and contributors. The user guide is [README.md](README.md).
 | `module/import/pdf-extract.mjs` | pdf.js → page items with position, size, and font style |
 | `module/import/sl-parser.mjs` | Page items → book data ([docs/data-format.md](docs/data-format.md)) |
 | `module/import/foundry-import.mjs` | Book data → world compendiums |
+| `module/import/table-plan.mjs` | Master tables: which book tables roll together or branch to others, by table name ([docs/data-format.md](docs/data-format.md#table-plan)) |
 | `module/import/keeper-pack.mjs` | Book data → RPG Keeper content pack |
 | `tools/extract.mjs` | CLI: PDF → `output/silent-legions-data.json` and `output/keeper-sl-pack.json` |
 | `templates/`, `styles/`, `lang/en.json` | Handlebars templates, CSS, English strings |
@@ -56,6 +57,9 @@ Rules for AI agents and contributors. The user guide is [README.md](README.md).
 - Item fields shown inline on an actor sheet use `data-item-field="system.x"` (no `name`), so they
   update the item, not the actor.
 - NPC attack rows use `name="attacks.N.field"`; `SLNpcSheet._processFormData` rebuilds the array.
+- Master tables refer to book tables by name. A renamed table shows up in `buildTablePlan().warnings`
+  and fails the "every master table finds its sub-tables" test. Created RollTables are matched to
+  plan ids by the flag `silent-legions.planId`, because `createDocuments` does not keep input order.
 
 ## Checklist for a change
 

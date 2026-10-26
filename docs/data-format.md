@@ -24,7 +24,7 @@ numbers are PDF page numbers (the printed page number is 3 lower).
 | `disciplines` | array | `{ name, page, description[], levels[{ level, description }] }` |
 | `creatures` | array | `{ name, group, page, template?, tier?, ac, mundaneImmune, hd ("3", "1 hp", "1d4 hp"), hdValue, attacks[{ name, bonus, count, damage }], attacksText, move, morale, skill, madness ("None / 1d6"), special, save, slaughter, description }` |
 | `tags` | array | `{ name, page, description, enemies[], friends[], schemes[], secrets[], places[] }` |
-| `tables` | array | `{ name, section, chapter, page, dice ("d6+d10"), formula ("1d60"), results[{ range[lo, hi], text }] }` |
+| `tables` | array | `{ name, part ("Creating Cults: …" or ""), section, chapter, page, header (line index; tables from one header line share it), column, dice ("d6+d10"), formula ("1d60"), results[{ range[lo, hi], text }] }` |
 | `warnings` | string[] | Sections or tables that did not parse as expected |
 | `counts` | object | Number of entries per array key |
 
@@ -36,3 +36,16 @@ Notes:
   gives the same chances as the two dice.
 - `creatures[].slaughter` is `1d6` unless the stat block names another die ("Most creature
   attacks use a 1d6 Slaughter die").
+
+## Table plan
+
+`buildTablePlan(data)` in `module/import/table-plan.mjs` adds the master tables. It returns:
+
+| Key | Contents |
+|---|---|
+| `tables` | `{ id, name, label, folder, formula, description, results[{ range, label, text, link? }] }`: the book tables plus helper tables (Deity Mode, Sample Deliria, Spells: Level N, Grimoire Spell Level, Resolution Kind, Investigation Kind, Challenge Kind) |
+| `masters` | `{ id, name, folder, top, kind ("all" or "branch"), description, formula, results[{ range, label, text?, ref }] }`, leaves first. `ref` is a table or master `id` |
+| `warnings` | Master tables or rows whose sub-table was not found |
+
+`link` is `{ kind: "background" | "delirium" | "spell" | "tag", name }`. The Foundry importer
+turns it into a document result; the Keeper pack turns it into a `[Name]` cross-link.

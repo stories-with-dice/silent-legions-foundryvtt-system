@@ -8,6 +8,8 @@
  * Node dependencies.
  */
 
+import { buildTablePlan } from "./table-plan.mjs";
+
 const slug = s => String(s).toLowerCase().replace(/['’]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 const md = list => (Array.isArray(list) ? list : String(list ?? "").split(/\n\n+/)).filter(Boolean).join("\n\n");
 const cell = s => String(s ?? "").replace(/\|/g, "/");
@@ -96,10 +98,20 @@ function compendium(data) {
       list("Schemes", t.schemes), list("Secrets", t.secrets), list("Places", t.places)].filter(Boolean).join("\n\n"), "tag"));
   }
 
-  // Random tables, as entries with a rollable die
-  for (const t of data.tables ?? []) {
-    const rows = t.results.map(r => [r.range[0] === r.range[1] ? r.range[0] : `${r.range[0]}–${r.range[1]}`, r.text]);
-    out.push(entry(t.name, "Other", `Table: ${t.chapter}`, `Roll ${t.formula} · ${t.section} · ${page(t.page)}\n\n${mdTable([t.formula, "Result"], rows)}`, "table"));
+  // Random tables, as entries with a rollable die. Spell and other links become [Name] cross-links.
+  const plan = buildTablePlan(data);
+  const names = new Map([...plan.tables, ...plan.masters].map(t => [t.id, t.name]));
+  for (const t of plan.tables) {
+    // Backgrounds have no Keeper entry of their own (they are in "Backgrounds"), so they stay text.
+    const rows = t.results.map(r => [r.range[0] === r.range[1] ? r.range[0] : `${r.range[0]}–${r.range[1]}`, r.link && r.link.kind !== "background" ? `[${r.link.name}]${r.text !== r.link.name ? ` ${r.text.replace(r.link.name, "").replace(/^\s*—\s*/, "— ")}` : ""}` : r.text]);
+    out.push(entry(t.name, "Other", `Table: ${t.folder}`, `Roll ${t.formula} · ${t.description}\n\n${mdTable([t.formula, "Result"], rows)}`, "table"));
+  }
+  // Generators (Foundry master tables): which tables to roll, as cross-links.
+  for (const m of plan.masters) {
+    const body = m.kind === "all"
+      ? `Roll on each:\n\n${m.results.map(r => `- [${names.get(r.ref)}]`).join("\n")}`
+      : `Roll ${m.formula}, then roll on the table it names:\n\n${mdTable([m.formula, "Result", "Then roll"], m.results.map(r => [r.range[0] === r.range[1] ? r.range[0] : `${r.range[0]}–${r.range[1]}`, r.text, `[${names.get(r.ref)}]`]))}`;
+    out.push(entry(m.name, "Other", m.top ? "Generator" : "Generator Step", `${m.description}\n\n${body}`, "generator"));
   }
   return out;
 }

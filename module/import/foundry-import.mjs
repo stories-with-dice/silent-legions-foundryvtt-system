@@ -6,6 +6,7 @@
  */
 import { SL } from "../config.mjs";
 import { defaultItemIcon } from "../sheets.mjs";
+import { buildTablePlan } from "./table-plan.mjs";
 
 const SYSTEM = "silent-legions";
 const esc = v => foundry.utils.escapeHTML(String(v ?? ""));
@@ -124,12 +125,89 @@ export function creatureToActor(c) {
   };
 }
 
-export function tableToDocument(t) {
+/**
+ * A plan table (table-plan.mjs) as RollTable data. Each result shows its table's label in
+ * bold, so a master table's chat card says which sub-table gave each line.
+ * @param {object} t
+ * @param {(link: object) => string|null} resolveLink  Item or journal page UUID for a link.
+ */
+export function planTableToDocument(t, resolveLink = () => null) {
   return {
-    name: t.name, formula: t.formula, replacement: true, displayRoll: true,
-    description: `${t.section ? `${t.section} · ` : ""}${pageRef(t.page)}`,
-    results: t.results.map(r => ({ type: "text", description: esc(r.text), range: r.range, weight: r.range[1] - r.range[0] + 1 }))
+    name: t.name, formula: t.formula, replacement: true, displayRoll: true, description: esc(t.description ?? ""),
+    results: t.results.map(r => {
+      const uuid = r.link ? resolveLink(r.link) : null;
+      const base = { name: r.label, description: esc(r.text), range: r.range, weight: r.range[1] - r.range[0] + 1 };
+      return uuid ? { ...base, type: "document", documentUuid: uuid } : { ...base, type: "text" };
+    })
   };
+}
+
+/** A master table: every result points to a table or another master by UUID. */
+function masterToDocument(m, uuids) {
+  return {
+    name: m.name, formula: m.formula, replacement: true, displayRoll: m.kind !== "all",
+    description: esc(m.description),
+    results: m.results.map(r => ({
+      type: "document", documentUuid: uuids.get(r.ref), name: r.label, description: r.text ? esc(r.text) : "",
+      range: r.range, weight: r.range[1] - r.range[0] + 1
+    }))
+  };
+}
+
+/** UUIDs of documents that table results can link to, from the world packs. */
+async function linkIndex() {
+  const index = new Map();
+  const add = (kind, name, uuid) => index.set(`${kind}:${name.toLowerCase()}`, uuid);
+  for (const [key, kind] of [["backgrounds", "background"], ["deliria", "delirium"], ["sorcery", "spell"]]) {
+    const pack = game.packs.get(`world.${packName(key)}`);
+    if (!pack) continue;
+    for (const e of await pack.getIndex({ fields: ["type"] })) add(kind, e.name, e.uuid);
+  }
+  const tags = game.packs.get(`world.${packName("tags")}`);
+  if (tags) {
+    for (const journal of await tags.getDocuments()) for (const page of journal.pages) add("tag", page.name, page.uuid);
+  }
+  return link => index.get(`${link.kind}:${String(link.name).toLowerCase()}`) ?? null;
+}
+
+/**
+ * Build the Random Tables pack: book tables in folders by book part, then the master
+ * tables ("Generators" for whole generators, "Generator Steps" for their parts).
+ */
+async function fillTables(pack, data) {
+  const plan = buildTablePlan(data);
+  for (const w of plan.warnings) console.warn(`Silent Legions import | ${w}`);
+  const resolveLink = await linkIndex();
+  const folderIds = new Map();
+  const folder = async name => {
+    if (!folderIds.has(name)) {
+      const f = await Folder.implementation.create({ name, type: "RollTable", sorting: "a" }, { pack: pack.collection });
+      folderIds.set(name, f.id);
+    }
+    return folderIds.get(name);
+  };
+  await folder(game.i18n.localize("SL.Generators"));
+  await folder(game.i18n.localize("SL.GeneratorSteps"));
+  const uuids = new Map();
+  const create = async (list, toData) => {
+    const docs = [];
+    // The plan id goes in a flag: createDocuments does not keep the input order.
+    for (const item of list) docs.push({ ...toData(item), folder: await folder(item.folder), flags: { [SYSTEM]: { planId: item.id } } });
+    for (let i = 0; i < docs.length; i += 100) {
+      const created = await RollTable.implementation.createDocuments(docs.slice(i, i + 100), { pack: pack.collection });
+      for (const doc of created) uuids.set(doc.getFlag(SYSTEM, "planId"), doc.uuid);
+    }
+  };
+  await create(plan.tables, t => planTableToDocument(t, resolveLink));
+  // Masters come leaves first; create them one level at a time so every reference exists.
+  let pending = plan.masters.map(m => ({ ...m, folder: game.i18n.localize(m.top ? "SL.Generators" : "SL.GeneratorSteps") }));
+  while (pending.length) {
+    const ready = pending.filter(m => m.results.every(r => uuids.has(r.ref)));
+    if (!ready.length) throw new Error(`Master tables with missing references: ${pending.map(m => m.name).join(", ")}`);
+    await create(ready, m => masterToDocument(m, uuids));
+    pending = pending.filter(m => !ready.includes(m));
+  }
+  return plan;
 }
 
 const htmlTable = (head, rows) => `<table><thead><tr>${head.map(h => `<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
@@ -261,8 +339,8 @@ export async function importBook(data, { only = Object.keys(PACKS), pdfPath = nu
     [game.i18n.localize("SL.Disciplines")]: data.disciplines.map(disciplineToItem)
   }));
   await step("bestiary", pack => fill(pack, Object.fromEntries(Object.entries(groupBy(data.creatures, c => c.group || "Other")).map(([g, list]) => [g, list.map(creatureToActor)]))));
-  await step("tables", pack => fill(pack, Object.fromEntries(Object.entries(groupBy(data.tables, t => t.chapter || "Other")).map(([g, list]) => [g, list.map(tableToDocument)]))));
   await step("tags", pack => fill(pack, { "": [tagsJournal(data)] }));
+  await step("tables", pack => fillTables(pack, data));
 
   await game.settings.set(SYSTEM, "madnessCosts", data.madnessCosts ?? []);
   await game.settings.set(SYSTEM, "importInfo", { date: new Date().toISOString(), counts: data.counts, parserVersion: data.meta?.parserVersion });

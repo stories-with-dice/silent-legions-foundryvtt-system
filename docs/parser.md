@@ -54,6 +54,12 @@ Random tables need the most care:
 - A table ends at a heading, a new table header, text left of the table, or a paragraph gap
   after its last row.
 - A row range that overlaps the previous row (a misprint) is shortened.
+- Column names: an independent column keeps its own title ("Central Asia", "Head"). A column that
+  only makes sense with the first one gets its name as a prefix ("Book: Adjective",
+  "It Maims or Kills: Word").
+- Record tables ("Quality", "Background") keep their columns in one result, joined with " — ".
+- Each table records its `part` (the last 17pt+ heading in its chapter, such as
+  "Creating Cults: Sons of Forsaken Wisdom"). `table-plan.mjs` and the folders use it.
 
 ## When a new printing breaks something
 

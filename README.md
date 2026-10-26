@@ -78,8 +78,40 @@ The importer builds these world compendiums, in the compendium folder "Silent Le
 | SL: Equipment | 21 weapons, 8 armors, 20 gear items, 9 vehicles |
 | SL: Spells & Disciplines | 38 spells by level, 8 disciplines with their level effects |
 | SL: Bestiary | 58 creatures: 33 creature templates and 25 named NPCs and horrors |
-| SL: Random Tables | 235 roll tables from the GM chapters |
+| SL: Random Tables | 232 book tables, 11 helper tables, and 60 master tables (see below) |
 | SL: Location Tags | Journal: 60 location tags with Enemies, Friends, Schemes, Secrets, Places |
+
+### Master tables (generators)
+
+The book builds its generators by rolling several tables together ("roll one of each type of
+die") or by letting one table pick the next. The **SL: Random Tables** compendium has master
+tables that do this for you. Draw one with Foundry's normal **Roll** button; Foundry rolls every
+sub-table and shows each line with the name of its table.
+
+| Folder | Contents |
+|---|---|
+| Generators | 22 complete generators: Dark Sorcery, Pantheon, Outer God, Lovecraftian Name, Alien Race, Kelipah, Cult, Cult Name, Magical Weapon, Protective Artifact, Miscellaneous Artifact, Occult Grimoire, Adventure Template, Extra Scenes, Scene Challenge, One-Roll Actor, One-Roll Crime, Monster Twist, Poison, Secret Adept, Dark Vision, Mythos Aberration |
+| Generator Steps | 38 parts of the generators, usable alone, for example "Cult: Roots of the Evil", "Alien: Physical Form", or "It Curses a Target (effect and word)" |
+| Book parts (Creating Gods, Creating Cults, …) | The book tables |
+
+Two kinds of master table:
+
+- **Roll on each**: every sub-table is rolled once. Example: "Cult" rolls the seven Roots of
+  the Evil tables, the seven How It Manifests tables, two minions, a cult name, and a portfolio
+  for its god.
+- **Branch**: a book table whose rows point to other tables. Example: "Dark Sorcery: Effect"
+  rolls The Sorcery's Basic Effect (1d12) and then the matching effect table and name word;
+  "Secret Adept: Region" rolls a region and then that region's adept table.
+
+Some results link to documents: Background rolls link to the background items, Location Tag
+rolls to the tag journal pages, "Sample Deliria" to the delirium items, and the "Spells: Level N"
+tables (used by "Occult Grimoire") to the spells.
+
+A few helper tables let you roll where the book says to pick: Deity Mode (1d4), Grimoire Spell
+Level (1d10: 1–3 level 1, 4–6 level 2, 7–8 level 3, 9 level 4, 10 level 5), Resolution Kind,
+Investigation Kind, and Challenge Kind. Counts that the book leaves to a die roll (a grimoire's
+1d4 spells, a Grand spell's 1d4+3 needed things) are in the table description: draw the
+sub-table again for each extra one.
 
 A new import deletes and rebuilds the selected compendiums. Items and actors that you already
 copied into the world do not change.
@@ -111,8 +143,9 @@ It writes `output/silent-legions-data.json` and `output/keeper-sl-pack.json`. Op
 1. In RPG Keeper, click **Import** and choose `keeper-sl-pack.json`.
 2. Confirm "Add Silent Legions (from your PDF) to Silent Legions?".
 
-Keeper adds 466 Compendium entries (rules, class abilities, deliria, spells, disciplines,
-equipment, location tags, and the random tables as rollable entries) and 58 Bestiary monsters to
+Keeper adds 534 Compendium entries (rules, class abilities, deliria, spells, disciplines,
+equipment, location tags, the random tables as rollable entries, and the generators as entries
+that link to the tables they roll on) and 58 Bestiary monsters to
 the Silent Legions system. Keeper never replaces entries during a pack import:
 
 - An entry with the same name and category as one you already have is skipped. Campaigns that

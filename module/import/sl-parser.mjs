@@ -10,7 +10,7 @@
  * printing can need small changes. Anything it cannot read goes to `warnings`.
  */
 
-export const PARSER_VERSION = 1;
+export const PARSER_VERSION = 2;
 
 const CLASS_NAMES = ["Investigator", "Scholar", "Socialite", "Tough"];
 const SAVE_KEYS = ["physical", "mental", "evasion", "magic", "luck"];
@@ -33,7 +33,7 @@ function joinItems(items) {
   for (const it of items) {
     if (prev) {
       const gap = it.x - (prev.x + prev.w);
-      if (gap > 0.8 && !out.endsWith(" ") && !it.s.startsWith(" ")) out += " ";
+      if (gap > 0.8 && !out.endsWith(" ") && !it.s.startsWith(" ") && !/^[.,;:!?)]/.test(it.s)) out += " ";
     }
     out += it.s;
     prev = it;
@@ -123,7 +123,7 @@ class Book {
       if (next && this.words.has((m[1] + next[1]).toLowerCase())) return a.slice(0, -1) + b;
       return a + b;
     }
-    return `${a} ${b}`;
+    return /^[.,;:!?)]/.test(b) ? `${a}${b}` : `${a} ${b}`;
   }
 }
 
@@ -594,6 +594,16 @@ function creatureDescription(book, c) {
   return group ? sectionParagraphs(book, group.index) : [];
 }
 
+/** The book part (last 17pt+ heading, such as "Creating Cults: Sons of Forsaken Wisdom") that contains line `i`. */
+function partOf(book, i) {
+  const chapter = book.lines[i].chapter;
+  for (let j = i; j >= 0 && book.lines[j].chapter === chapter; j--) {
+    const l = book.lines[j];
+    if (Book.isHeading(l, 17) && l.h < 30) return l.text;
+  }
+  return "";
+}
+
 /** The section (last 13pt+ heading) that contains line `i`. */
 function sectionOf(book, i) {
   for (let j = i; j >= 0; j--) {
@@ -653,6 +663,10 @@ function parseTags(book) {
 /* -------------------------------------------- */
 
 const DIE_RE = /^1?d(\d+)$/i;
+/** Column titles that only make sense with their first column ("Book | Adjective | Noun" → "Book: Adjective"). */
+const DEPENDENT_COLUMNS = new Set(["Word", "Adjective", "Noun", "Modifiers", "Characteristic Words", "Intervals", "Harm", "V"]);
+/** Tables whose columns describe one row together: they stay one table ("Acidic — Damage+, Hit+ — Acrid, fuming"). */
+const RECORD_TABLES = new Set(["Quality", "Background"]);
 const ROW_RE = /^(\d+)(?:\s*[-–]\s*(\d+))?$/;
 
 /** Split a header line into segments: each die (or die pair) starts a segment with its title columns. */
@@ -717,21 +731,24 @@ function parseRandomTables(book) {
     const segs = headerSegments(head);
     if (!segs.length || segs.some(s => !s.titles.length)) continue;
     const section = sectionOf(book, i);
+    const part = partOf(book, i);
     const result = readTableBody(book, head.index, segs, head);
     const fromLine = [];
     for (const [k, seg] of segs.entries()) {
       const rows = result[k];
       if (rows.length < 2) continue;
-      seg.titles.forEach((title, c) => {
-        const results = rows.map(r => ({ range: [...r.range], text: norm(r.cells[c] ?? "") })).filter(r => r.text);
+      const record = RECORD_TABLES.has(seg.titles[0].s);
+      const columns = record ? [seg.titles[0]] : seg.titles;
+      columns.forEach((title, c) => {
+        const results = rows.map(r => ({ range: [...r.range], text: norm(record ? r.cells.filter(Boolean).join(" — ") : (r.cells[c] ?? "")) })).filter(r => r.text);
         if (results.length < 2) return;
-        let name = seg.titles.length > 1 && c > 0 ? `${seg.titles[0].s}: ${title.s}` : title.s;
+        let name = c > 0 && DEPENDENT_COLUMNS.has(title.s) ? `${seg.titles[0].s}: ${title.s}` : title.s;
         if (prefix) name = `${prefix}: ${title.s}`;
         else if (seg.titles[0].s.length <= 3) name = `${section.title}: ${name}`;
         const dice = seg.dice.map(d => `d${d.size}`).join("+");
         const same = fromLine.find(t => t.name === name && t.dice === dice);
         if (same) same.results.push(...results);
-        else fromLine.push({ name, section: section.title, chapter: head.chapter, page: head.page, dice, results });
+        else fromLine.push({ name, part, section: section.title, chapter: head.chapter, page: head.page, header: head.index, column: c, dice, results });
       });
     }
     for (const t of fromLine) {
