@@ -1,0 +1,5 @@
+# Book PDF and everything extracted from it stay local (copyrighted text).
+*.pdf
+output/
+node_modules/
+.DS_Store

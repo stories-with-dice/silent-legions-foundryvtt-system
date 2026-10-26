@@ -1,0 +1,71 @@
+<div class="sl-npc">
+  <header class="sl-header">
+    <img class="sl-portrait" src="{{actor.img}}" data-action="editImage" data-edit="img" alt="{{actor.name}}">
+    <div class="sl-header-main">
+      <input class="sl-name" type="text" name="name" value="{{actor.name}}">
+      <input type="text" name="system.group" value="{{source.group}}" placeholder="{{localize 'SL.Group'}}">
+      <div class="sl-header-buttons">
+        <button type="button" data-action="roll" data-roll-type="initiative"><i class="fa-solid fa-bolt"></i> {{localize "SL.Initiative"}}</button>
+        <button type="button" data-action="roll" data-roll-type="save"><i class="fa-solid fa-shield-halved"></i> {{localize "SL.Save.npc"}} {{system.saveTarget}}+</button>
+        <button type="button" data-action="roll" data-roll-type="npcSkill"><i class="fa-solid fa-dice"></i> {{localize "SL.Skill"}} {{numberFormat system.skill sign=true}}</button>
+        <button type="button" data-action="roll" data-roll-type="morale"><i class="fa-solid fa-person-running"></i> {{localize "SL.Morale"}} {{system.morale}}</button>
+        {{#if system.madnessFormula}}
+        <button type="button" data-action="roll" data-roll-type="npcMadness"><i class="fa-solid fa-brain"></i> {{localize "SL.Madness"}} {{system.madnessFormula}}</button>
+        {{/if}}
+      </div>
+    </div>
+  </header>
+
+  <div class="sl-scroll">
+    <div class="sl-statblock">
+      <label>{{localize "SL.AC"}} <input type="number" name="system.ac" value="{{source.ac}}"></label>
+      <label class="sl-check"><input type="checkbox" name="system.mundaneImmune" {{checked source.mundaneImmune}}> {{localize "SL.MundaneImmune"}}</label>
+      <label>{{localize "SL.HD"}} <input type="text" name="system.hd" value="{{source.hd}}"></label>
+      <label>{{localize "SL.HP"}}
+        <input type="number" name="system.hp.value" value="{{source.hp.value}}"> /
+        <input type="number" name="system.hp.max" value="{{source.hp.max}}">
+        <a data-action="roll" data-roll-type="hp" data-tooltip="{{localize 'SL.RollHP'}}"><i class="fa-solid fa-dice"></i></a>
+      </label>
+      <label>{{localize "SL.Move"}} <input type="text" name="system.move" value="{{source.move}}"></label>
+      <label>{{localize "SL.Morale"}} <input type="number" name="system.morale" value="{{source.morale}}" min="1" max="12"></label>
+      <label>{{localize "SL.Skill"}} <input type="number" name="system.skill" value="{{source.skill}}"></label>
+      <label>{{localize "SL.Madness"}} <input type="text" name="system.madness" value="{{source.madness}}"></label>
+      <label>{{localize "SL.SaveOverride"}} <input type="number" name="system.save" value="{{source.save}}" placeholder="{{system.saveTarget}}"></label>
+      <label>{{localize "SL.SlaughterDie"}} <input type="text" name="system.slaughter" value="{{source.slaughter}}"></label>
+      <label class="sl-wide">{{localize "SL.Special"}} <input type="text" name="system.special" value="{{source.special}}"></label>
+    </div>
+
+    <h3 class="sl-section">{{localize "SL.Attacks"}}
+      {{#if editable}}<a class="sl-add" data-action="addAttack"><i class="fa-solid fa-plus"></i></a>{{/if}}</h3>
+    <ol class="sl-list sl-attacks">
+      {{#each attacks}}
+      <li class="sl-item">
+        <a data-action="roll" data-roll-type="attack" data-key="{{index}}" data-tooltip="{{localize 'SL.ShiftSkip'}}"><i class="fa-solid fa-dice-d20"></i></a>
+        <input type="text" name="attacks.{{index}}.name" value="{{name}}" placeholder="{{localize 'SL.Name'}}">
+        <input type="number" class="sl-small" name="attacks.{{index}}.bonus" value="{{bonus}}" data-tooltip="{{localize 'SL.ToHit'}}">
+        ×<input type="number" class="sl-small" name="attacks.{{index}}.count" value="{{count}}" min="1">
+        <input type="text" class="sl-dmg" name="attacks.{{index}}.damage" value="{{damage}}" placeholder="1d6">
+        {{#if @root.editable}}<a data-action="deleteAttack" data-index="{{index}}"><i class="fa-solid fa-trash"></i></a>{{/if}}
+      </li>
+      {{/each}}
+    </ol>
+
+    {{#if items.length}}
+    <h3 class="sl-section">{{localize "SL.Items"}}</h3>
+    <ol class="sl-list">
+      {{#each items}}
+      <li class="sl-item draggable" data-item-id="{{id}}">
+        <a class="sl-item-name" data-action="itemUse"><img src="{{img}}" alt="">{{name}}</a>
+        <span class="sl-controls">
+          <a data-action="itemEdit"><i class="fa-solid fa-pen"></i></a>
+          <a data-action="itemDelete"><i class="fa-solid fa-trash"></i></a>
+        </span>
+      </li>
+      {{/each}}
+    </ol>
+    {{/if}}
+
+    <h3 class="sl-section">{{localize "SL.Description"}}</h3>
+    <prose-mirror name="system.description" value="{{source.description}}" toggled {{#unless editable}}disabled{{/unless}}>{{{enriched.description}}}</prose-mirror>
+  </div>
+</div>

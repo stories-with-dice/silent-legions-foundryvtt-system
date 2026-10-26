@@ -1,0 +1,43 @@
+<header class="sl-header">
+  <img class="sl-portrait" src="{{actor.img}}" data-action="editImage" data-edit="img" alt="{{actor.name}}">
+  <div class="sl-header-main">
+    <input class="sl-name" type="text" name="name" value="{{actor.name}}" placeholder="{{localize 'Name'}}">
+    <div class="sl-header-line">
+      <span class="sl-class-label">{{#if system.hasClass}}{{system.classLabel}}{{else}}{{localize "SL.NoClass"}}{{/if}}</span>
+      <span>· {{localize "SL.Level"}} {{system.level}}</span>
+      <label>{{localize "SL.XP"}} <input type="number" name="system.xp" value="{{source.xp}}"> / {{system.nextLevelXP}}</label>
+    </div>
+    <div class="sl-resources">
+      <div class="sl-resource">
+        <label>{{localize "SL.HP"}}</label>
+        <input type="number" name="system.hp.value" value="{{source.hp.value}}"> /
+        <input type="number" name="system.hp.max" value="{{source.hp.max}}">
+        <span class="sl-hint" data-tooltip="{{localize 'SL.HitDice'}}">{{system.hitDice}}</span>
+      </div>
+      <div class="sl-resource">
+        <label>{{localize "SL.Expertise"}}</label>
+        <input type="number" name="system.expertise.value" value="{{source.expertise.value}}"> / {{system.expertise.max}}
+      </div>
+      <div class="sl-resource sl-madness">
+        <label>{{localize "SL.Madness"}}</label>
+        <input type="number" name="system.madness.value" value="{{source.madness.value}}"> / 100
+        <div class="sl-bar"><div style="width: {{madnessPct}}%"></div></div>
+      </div>
+      <div class="sl-resource">
+        <label>{{localize "SL.AC"}}</label>
+        <span class="sl-big" data-tooltip="{{localize 'SL.ACMelee'}}">{{system.ac.melee}}</span>
+        <span class="sl-hint" data-tooltip="{{localize 'SL.ACRanged'}}">/ {{system.ac.ranged}}</span>
+      </div>
+      <div class="sl-resource">
+        <label>{{localize "SL.AttackBonus"}}</label>
+        <span class="sl-big">{{numberFormat system.attackBonus sign=true}}</span>
+      </div>
+    </div>
+    <div class="sl-header-buttons">
+      <button type="button" data-action="roll" data-roll-type="initiative"><i class="fa-solid fa-bolt"></i> {{localize "SL.Initiative"}}</button>
+      <button type="button" data-action="roll" data-roll-type="madness"><i class="fa-solid fa-brain"></i> {{localize "SL.GainMadness"}}</button>
+      <button type="button" data-action="roll" data-roll-type="rest"><i class="fa-solid fa-bed"></i> {{localize "SL.Rest"}}</button>
+      <button type="button" data-action="roll" data-roll-type="levelUp"><i class="fa-solid fa-arrow-up"></i> {{localize "SL.LevelUp"}}</button>
+    </div>
+  </div>
+</header>

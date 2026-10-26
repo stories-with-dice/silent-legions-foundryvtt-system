@@ -1,0 +1,96 @@
+<div class="sl-item-sheet">
+  <header class="sl-header">
+    <img class="sl-portrait" src="{{item.img}}" data-action="editImage" data-edit="img" alt="{{item.name}}">
+    <div class="sl-header-main">
+      <input class="sl-name" type="text" name="name" value="{{item.name}}">
+      <span class="sl-hint">{{localize (concat "TYPES.Item." type)}}</span>
+      {{#if canUse}}<button type="button" data-action="use"><i class="fa-solid fa-dice"></i> {{localize "SL.Use"}}</button>{{/if}}
+    </div>
+  </header>
+
+  <div class="sl-scroll">
+    <div class="sl-fields">
+      {{#if isSkill}}
+        <label>{{localize "SL.Level"}} <input type="number" name="system.level" value="{{source.level}}" min="0" max="4"></label>
+        <label>{{localize "SL.Attribute"}} <select name="system.attribute">{{selectOptions attributeChoices selected=source.attribute localize=true}}</select></label>
+        <p class="sl-hint">{{localize "SL.SkillNameHint"}}</p>
+      {{/if}}
+
+      {{#if isWeapon}}
+        <label>{{localize "SL.Damage"}} <input type="text" name="system.damage" value="{{source.damage}}"></label>
+        <label>{{localize "SL.SlaughterDie"}} <input type="text" name="system.slaughter" value="{{source.slaughter}}"></label>
+        <label>{{localize "SL.Attributes"}} <input type="text" name="system.attributes" value="{{source.attributes}}" placeholder="str/dex"></label>
+        <label>{{localize "SL.CombatSkill"}} <input type="text" name="system.skill" value="{{source.skill}}" list="sl-combat-skills"></label>
+        <datalist id="sl-combat-skills">{{#each config.combatSkills}}<option value="{{this}}">{{/each}}</datalist>
+        <label>{{localize "SL.Range"}} <input type="text" name="system.range" value="{{source.range}}"></label>
+        <label>{{localize "SL.Magazine"}} <input type="number" name="system.magazine" value="{{source.magazine}}"></label>
+        <label>{{localize "SL.Ammo"}} <input type="number" name="system.ammo" value="{{source.ammo}}"></label>
+        <label class="sl-check"><input type="checkbox" name="system.firearm" {{checked source.firearm}}> {{localize "SL.Firearm"}}</label>
+        <label class="sl-check"><input type="checkbox" name="system.burst" {{checked source.burst}}> {{localize "SL.BurstFire"}}</label>
+        <label class="sl-check"><input type="checkbox" name="system.subdual" {{checked source.subdual}}> {{localize "SL.Subdual"}}</label>
+        <label class="sl-check"><input type="checkbox" name="system.unarmed" {{checked source.unarmed}}> {{localize "SL.Unarmed"}}</label>
+      {{/if}}
+
+      {{#if isArmor}}
+        <label class="sl-check"><input type="checkbox" name="system.shield" {{checked source.shield}}> {{localize "SL.Shield"}}</label>
+        {{#if source.shield}}
+        <label>{{localize "SL.ShieldBonus"}} <input type="number" name="system.shieldBonus" value="{{source.shieldBonus}}"></label>
+        {{else}}
+        <label>{{localize "SL.AC"}} <input type="number" name="system.ac" value="{{source.ac}}" min="0" max="9"></label>
+        {{/if}}
+        <label class="sl-check"><input type="checkbox" name="system.noFirearms" {{checked source.noFirearms}}> {{localize "SL.NoFirearms"}}</label>
+        <label class="sl-check"><input type="checkbox" name="system.noMelee" {{checked source.noMelee}}> {{localize "SL.NoMelee"}}</label>
+        <label class="sl-check"><input type="checkbox" name="system.worn" {{checked source.worn}}> {{localize "SL.Worn"}}</label>
+      {{/if}}
+
+      {{#if isGear}}
+        <label>{{localize "SL.Quantity"}} <input type="number" name="system.quantity" value="{{source.quantity}}"></label>
+        <label class="sl-check"><input type="checkbox" name="system.bundle" {{checked source.bundle}}> {{localize "SL.Bundle"}}</label>
+      {{/if}}
+
+      {{#if hasLocation}}
+        <label>{{localize "SL.Enc"}} <input type="number" name="system.enc" value="{{source.enc}}" min="0"></label>
+        <label>{{localize "SL.Cost"}} <input type="text" name="system.cost" value="{{source.cost}}"></label>
+        <label>{{localize "SL.Location"}} <select name="system.location">{{selectOptions config.itemLocations selected=source.location localize=true}}</select></label>
+      {{/if}}
+
+      {{#if isVehicle}}
+        <label>{{localize "SL.Speed"}} <input type="number" name="system.speed" value="{{source.speed}}"></label>
+        <label>{{localize "SL.Armor"}} <input type="number" name="system.armor" value="{{source.armor}}"></label>
+        <label>{{localize "SL.HP"}} <input type="number" name="system.hp.value" value="{{source.hp.value}}"> / <input type="number" name="system.hp.max" value="{{source.hp.max}}"></label>
+        <label>{{localize "SL.Crew"}} <input type="number" name="system.crew" value="{{source.crew}}"></label>
+        <label>{{localize "SL.Cost"}} <input type="text" name="system.cost" value="{{source.cost}}"></label>
+      {{/if}}
+
+      {{#if isSpell}}
+        <label>{{localize "SL.SpellLevel"}} <input type="number" name="system.level" value="{{source.level}}" min="1" max="5"></label>
+      {{/if}}
+
+      {{#if isDiscipline}}
+        <label>{{localize "SL.Level"}} <input type="number" name="system.level" value="{{source.level}}" min="0" max="4"></label>
+        <label>{{localize "SL.Mastered"}} <input type="number" name="system.mastered" value="{{source.mastered}}" min="-1" max="4"></label>
+        <div class="sl-levels">
+          {{#each levels}}
+          <label>{{localize "SL.Level"}} {{level}} <textarea name="system.levels.{{level}}" rows="2">{{text}}</textarea></label>
+          {{/each}}
+        </div>
+      {{/if}}
+
+      {{#if isAbility}}
+        <label>{{localize "SL.ClassLabel"}} <select name="system.class">{{selectOptions classChoices selected=source.class localize=true}}</select></label>
+        <label>{{localize "SL.Level"}} <input type="number" name="system.level" value="{{source.level}}" min="1"></label>
+        <label>{{localize "SL.ExpertiseCost"}} <input type="number" name="system.cost" value="{{source.cost}}" min="0"></label>
+      {{/if}}
+
+      {{#if isBackground}}
+        <label class="sl-wide">{{localize "SL.Skills"}} <input type="text" name="system.skills" value="{{source.skills}}" placeholder="Culture/Home, Law, Persuade"></label>
+        <p class="sl-hint">{{localize "SL.BackgroundHint"}}</p>
+      {{/if}}
+
+      <label class="sl-wide">{{localize "SL.Source"}} <input type="text" name="system.source" value="{{source.source}}"></label>
+    </div>
+
+    <h3 class="sl-section">{{localize "SL.Description"}}</h3>
+    <prose-mirror name="system.description" value="{{source.description}}" toggled {{#unless editable}}disabled{{/unless}}>{{{enriched.description}}}</prose-mirror>
+  </div>
+</div>

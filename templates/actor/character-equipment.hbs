@@ -1,0 +1,75 @@
+<section class="tab {{tab.cssClass}}" data-group="primary" data-tab="equipment">
+  <p class="sl-enc">
+    {{localize "SL.Readied"}} <strong>{{system.encumbrance.readied}} / {{system.encumbrance.readiedMax}}</strong> ·
+    {{localize "SL.Stowed"}} <strong>{{system.encumbrance.stowed}} / {{system.encumbrance.stowedMax}}</strong> ·
+    {{localize system.encumbrance.label}} ({{system.encumbrance.move}} m)
+  </p>
+
+  <h3 class="sl-section">{{localize "SL.Weapons"}}
+    {{#if editable}}<a class="sl-add" data-action="itemCreate" data-type="weapon"><i class="fa-solid fa-plus"></i></a>{{/if}}</h3>
+  <ol class="sl-list">
+    <li class="sl-list-head"><span class="sl-item-name"></span><span>{{localize "SL.ToHit"}}</span><span>{{localize "SL.Damage"}}</span><span>{{localize "SL.SlaughterDie"}}</span><span>{{localize "SL.Ammo"}}</span><span></span></li>
+    {{#each weapons}}
+    <li class="sl-item draggable" data-item-id="{{id}}">
+      <a class="sl-item-name" data-action="itemUse" data-tooltip="{{localize 'SL.ShiftSkip'}}"><img src="{{item.img}}" alt="">{{item.name}}</a>
+      <span>{{numberFormat toHit sign=true}}</span>
+      <span>{{damage}}</span>
+      <span>{{item.system.slaughter}}</span>
+      <span>{{#if item.system.magazine}}<input type="number" class="sl-small" data-item-field="system.ammo" value="{{item.system.ammo}}"> / {{item.system.magazine}}{{/if}}</span>
+      <span class="sl-controls">
+        <select class="sl-loc" data-item-field="system.location">{{selectOptions @root.locations selected=item.system.location localize=true}}</select>
+        <a data-action="itemEdit"><i class="fa-solid fa-pen"></i></a>
+        <a data-action="itemDelete"><i class="fa-solid fa-trash"></i></a>
+      </span>
+    </li>
+    {{/each}}
+  </ol>
+
+  <h3 class="sl-section">{{localize "SL.Armor"}}
+    {{#if editable}}<a class="sl-add" data-action="itemCreate" data-type="armor"><i class="fa-solid fa-plus"></i></a>{{/if}}</h3>
+  <ol class="sl-list">
+    {{#each armor}}
+    <li class="sl-item draggable" data-item-id="{{id}}">
+      <a class="sl-item-name" data-action="itemEdit"><img src="{{img}}" alt="">{{name}}</a>
+      <span>{{#if system.shield}}-{{system.shieldBonus}}{{else}}AC {{system.ac}}{{/if}}{{#if system.noFirearms}} *{{/if}}{{#if system.noMelee}} @{{/if}}</span>
+      <a class="sl-toggle {{#if system.worn}}active{{/if}}" data-action="toggleWorn">
+        <i class="fa-solid {{#if system.worn}}fa-shirt{{else}}fa-box{{/if}}"></i> {{#if system.worn}}{{localize "SL.Worn"}}{{else}}{{localize "SL.NotWorn"}}{{/if}}
+      </a>
+      <span class="sl-controls">
+        <select class="sl-loc" data-item-field="system.location">{{selectOptions @root.locations selected=system.location localize=true}}</select>
+        <a data-action="itemDelete"><i class="fa-solid fa-trash"></i></a>
+      </span>
+    </li>
+    {{/each}}
+  </ol>
+
+  <h3 class="sl-section">{{localize "SL.Gear"}}
+    {{#if editable}}<a class="sl-add" data-action="itemCreate" data-type="gear"><i class="fa-solid fa-plus"></i></a>{{/if}}</h3>
+  <ol class="sl-list">
+    {{#each gear}}
+    <li class="sl-item draggable" data-item-id="{{id}}">
+      <a class="sl-item-name" data-action="itemUse"><img src="{{img}}" alt="">{{name}}</a>
+      <span><input type="number" class="sl-small" data-item-field="system.quantity" value="{{system.quantity}}" min="0"></span>
+      <span class="sl-hint">{{localize "SL.Enc"}} {{system.enc}}{{#if system.bundle}}@{{/if}}</span>
+      <span class="sl-controls">
+        <select class="sl-loc" data-item-field="system.location">{{selectOptions @root.locations selected=system.location localize=true}}</select>
+        <a data-action="itemEdit"><i class="fa-solid fa-pen"></i></a>
+        <a data-action="itemDelete"><i class="fa-solid fa-trash"></i></a>
+      </span>
+    </li>
+    {{/each}}
+  </ol>
+
+  <h3 class="sl-section">{{localize "SL.Vehicles"}}
+    {{#if editable}}<a class="sl-add" data-action="itemCreate" data-type="vehicle"><i class="fa-solid fa-plus"></i></a>{{/if}}</h3>
+  <ol class="sl-list">
+    {{#each vehicles}}
+    <li class="sl-item draggable" data-item-id="{{id}}">
+      <a class="sl-item-name" data-action="itemEdit"><img src="{{img}}" alt="">{{name}}</a>
+      <span class="sl-hint">{{localize "SL.Speed"}} {{system.speed}} · {{localize "SL.Armor"}} {{system.armor}}</span>
+      <span>{{localize "SL.HP"}} <input type="number" class="sl-small" data-item-field="system.hp.value" value="{{system.hp.value}}"> / {{system.hp.max}}</span>
+      <span class="sl-controls"><a data-action="itemDelete"><i class="fa-solid fa-trash"></i></a></span>
+    </li>
+    {{/each}}
+  </ol>
+</section>

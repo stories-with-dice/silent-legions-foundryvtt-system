@@ -1,0 +1,106 @@
+/* Silent Legions system styles. Colors follow Foundry's theme variables. */
+.silent-legions {
+  --sl-accent: #5b7a5b;
+  --sl-danger: #9b2c2c;
+  --sl-border: var(--color-border, #7a7971);
+}
+
+.silent-legions .window-content { padding: 0.5rem; }
+.silent-legions input[type="number"] { width: 3.2rem; text-align: center; }
+.silent-legions input.sl-small { width: 2.6rem; }
+.silent-legions .sl-hint { color: var(--color-text-subtle, #888); font-size: var(--font-size-12, 12px); }
+.silent-legions .sl-wide { flex: 1; display: flex; gap: 0.4rem; align-items: center; }
+.silent-legions .sl-wide input { flex: 1; }
+.silent-legions .sl-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin: 0.3rem 0; }
+.silent-legions .sl-check { display: flex; align-items: center; gap: 0.3rem; }
+
+/* Header */
+.silent-legions .sl-header { display: flex; gap: 0.6rem; margin-bottom: 0.4rem; }
+.silent-legions .sl-portrait { width: 96px; height: 96px; object-fit: cover; border: 1px solid var(--sl-border); border-radius: 4px; cursor: pointer; flex: none; }
+.silent-legions .sl-header-main { flex: 1; display: flex; flex-direction: column; gap: 0.3rem; }
+.silent-legions .sl-name { font-size: 1.5rem; height: 2.2rem; font-family: var(--font-h1, serif); }
+.silent-legions .sl-header-line { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
+.silent-legions .sl-header-line input { width: 4.5rem; }
+.silent-legions .sl-resources { display: flex; flex-wrap: wrap; gap: 0.8rem; }
+.silent-legions .sl-resource { display: flex; align-items: center; gap: 0.25rem; }
+.silent-legions .sl-resource label { font-weight: bold; }
+.silent-legions .sl-big { font-size: 1.25rem; font-weight: bold; }
+.silent-legions .sl-madness { position: relative; }
+.silent-legions .sl-bar { width: 60px; height: 6px; background: rgba(0, 0, 0, 0.25); border-radius: 3px; overflow: hidden; }
+.silent-legions .sl-bar > div { height: 100%; background: var(--sl-danger); }
+.silent-legions .sl-header-buttons { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.silent-legions .sl-header-buttons button { flex: 0 0 auto; width: auto; padding: 0 0.6rem; line-height: 1.6rem; }
+
+/* Sections and lists */
+.silent-legions .sl-section { border-bottom: 1px solid var(--sl-border); margin: 0.7rem 0 0.3rem; display: flex; align-items: center; gap: 0.5rem; font-size: 1.05rem; }
+.silent-legions .sl-subsection { margin: 0.4rem 0 0.2rem; font-size: 0.95rem; }
+.silent-legions .sl-add { margin-left: auto; }
+.silent-legions .sl-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.silent-legions .sl-list { list-style: none; margin: 0; padding: 0; }
+.silent-legions .sl-item, .silent-legions .sl-list-head { display: flex; align-items: center; gap: 0.5rem; padding: 0.15rem 0.2rem; border-bottom: 1px dotted var(--sl-border); }
+.silent-legions .sl-list-head { font-size: 11px; text-transform: uppercase; border-bottom: none; color: var(--color-text-subtle, #888); }
+.silent-legions .sl-item > span, .silent-legions .sl-list-head > span { min-width: 3rem; text-align: center; }
+.silent-legions .sl-item-name { flex: 1; display: flex; align-items: center; gap: 0.4rem; cursor: pointer; }
+.silent-legions .sl-item-name img { width: 24px; height: 24px; border: none; }
+.silent-legions .sl-controls { display: flex; gap: 0.4rem; align-items: center; margin-left: auto; }
+.silent-legions .sl-loc { width: 7rem; height: 1.5rem; }
+.silent-legions .sl-empty { font-style: italic; color: var(--color-text-subtle, #888); }
+.silent-legions .sl-class-skill { color: var(--sl-accent); font-size: 10px; }
+.silent-legions .sl-locked { opacity: 0.5; }
+.silent-legions .sl-toggle.active { color: var(--sl-accent); font-weight: bold; }
+.silent-legions .sl-enc { margin: 0.2rem 0; }
+
+/* Attributes and saves */
+.silent-legions .sl-attributes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; }
+.silent-legions .sl-attr { display: flex; flex-direction: column; align-items: center; border: 1px solid var(--sl-border); border-radius: 4px; padding: 0.2rem; }
+.silent-legions .sl-attr label { font-weight: bold; }
+.silent-legions .sl-mod { font-size: 1.1rem; font-weight: bold; }
+.silent-legions .sl-saves { display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem; }
+.silent-legions .sl-save { display: flex; justify-content: space-between; border: 1px solid var(--sl-border); border-radius: 4px; padding: 0.2rem 0.4rem; cursor: pointer; }
+.silent-legions .sl-save:hover, .silent-legions .sl-item-name:hover { text-shadow: 0 0 6px var(--color-shadow-primary, #ff6400); }
+.silent-legions .sl-classes { display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem; }
+.silent-legions .sl-classes label { display: flex; justify-content: space-between; align-items: center; }
+.silent-legions .sl-adjust summary { cursor: pointer; margin-top: 0.4rem; }
+
+/* NPC */
+.silent-legions .sl-npc { display: flex; flex-direction: column; height: 100%; }
+.silent-legions .sl-scroll { overflow-y: auto; flex: 1; }
+.silent-legions .sl-statblock { display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem 1rem; }
+.silent-legions .sl-statblock label { display: flex; align-items: center; gap: 0.3rem; justify-content: space-between; }
+.silent-legions .sl-statblock input[type="text"] { width: 8rem; }
+.silent-legions .sl-statblock .sl-wide { grid-column: span 2; }
+.silent-legions .sl-attacks input[type="text"] { flex: 1; }
+.silent-legions .sl-attacks .sl-dmg { max-width: 8rem; }
+
+/* Items */
+.silent-legions .sl-item-sheet { display: flex; flex-direction: column; height: 100%; }
+.silent-legions .sl-item-sheet .sl-portrait { width: 64px; height: 64px; }
+.silent-legions .sl-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem 1rem; }
+.silent-legions .sl-fields > label { display: flex; align-items: center; justify-content: space-between; gap: 0.3rem; }
+.silent-legions .sl-fields input[type="text"] { width: 9rem; }
+.silent-legions .sl-fields .sl-wide, .silent-legions .sl-fields .sl-hint, .silent-legions .sl-levels { grid-column: span 2; }
+.silent-legions .sl-levels label { display: flex; flex-direction: column; margin-bottom: 0.3rem; }
+.silent-legions prose-mirror { min-height: 8rem; }
+
+/* Tabs */
+.silent-legions .tab { display: none; }
+.silent-legions .tab.active { display: block; }
+
+/* Import dialog */
+.sl-import .sl-import-packs { display: grid; grid-template-columns: 1fr 1fr; gap: 0.2rem; }
+.sl-import .sl-import-status { min-height: 1.2rem; font-weight: bold; }
+.sl-import .form-footer { display: flex; gap: 0.4rem; }
+.sl-import-button { margin-top: 0.3rem; }
+
+/* Chat cards */
+.sl-card .sl-card-header { display: flex; gap: 0.4rem; align-items: center; margin-bottom: 0.3rem; }
+.sl-card .sl-card-header img { width: 32px; height: 32px; border: none; }
+.sl-card .sl-card-header h3 { margin: 0; border: none; }
+.sl-card .sl-sub { font-size: 11px; color: var(--color-text-subtle, #777); }
+.sl-card .sl-outcome { text-align: center; font-weight: bold; padding: 0.15rem; margin: 0.2rem 0; border-radius: 3px; }
+.sl-card .sl-outcome.success { background: rgba(70, 140, 70, 0.25); }
+.sl-card .sl-outcome.failure { background: rgba(160, 50, 50, 0.25); }
+.sl-card .sl-card-buttons { display: flex; flex-direction: column; gap: 0.2rem; margin-top: 0.3rem; }
+.sl-card .sl-card-desc { max-height: 12rem; overflow-y: auto; font-size: 12px; }
+.sl-card .sl-paid { font-style: italic; }
+.sl-note { font-style: italic; }

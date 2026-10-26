@@ -1,0 +1,161 @@
+/**
+ * Convert parsed book data (sl-parser.mjs) into an RPG Keeper content pack.
+ *
+ * RPG Keeper (osr_keeper repo) imports a file with a `pack` header as a content pack:
+ * it adds the Compendium entries and Bestiary monsters to the "sl" system, skips
+ * entries it already has (same name and category), and never replaces anything.
+ * The shapes follow osr_keeper's data/seed-sl.json. This file has no Foundry or
+ * Node dependencies.
+ */
+
+const slug = s => String(s).toLowerCase().replace(/['’]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+const md = list => (Array.isArray(list) ? list : String(list ?? "").split(/\n\n+/)).filter(Boolean).join("\n\n");
+const cell = s => String(s ?? "").replace(/\|/g, "/");
+const mdTable = (head, rows) => [`| ${head.join(" | ")} |`, `|${head.map(() => "---").join("|")}|`, ...rows.map(r => `| ${r.map(cell).join(" | ")} |`)].join("\n");
+const page = p => (p ? `p. ${p - 3}` : "");
+
+function entry(name, category, source, body, refKind) {
+  return { name, category, source, body, ref: `slpdf:${refKind}:${slug(name)}` };
+}
+
+/* -------------------------------------------- */
+/*  Compendium                                  */
+/* -------------------------------------------- */
+
+function weaponSource(w) {
+  if (/machine gun|launcher/i.test(w.name)) return "Weapon (Heavy)";
+  if (/bow|grenade/i.test(w.name) || (w.range && !w.magazine && !/knife|club|spear/i.test(w.name))) return "Weapon (Ranged)";
+  if (Number(w.magazine) > 0 && !/taser/i.test(w.name)) return "Weapon (Firearm)";
+  return "Weapon (Melee)";
+}
+
+function compendium(data) {
+  const out = [];
+  // Rules
+  for (const s of data.quickReference ?? []) out.push(entry(`Quick Reference: ${s.title}`, "Rules", "Quick Reference", md(s.paragraphs), "rule"));
+  if (data.madnessCosts?.length) {
+    out.push(entry("Madness Costs", "Rules", "Madness", mdTable(["Category", "Event", "Cost"], data.madnessCosts.map(m => [m.category, m.event, m.cost])), "rule"));
+  }
+  if (data.disciplineRules?.length) out.push(entry("Occult Disciplines", "Rules", "Sorcery", md(data.disciplineRules), "rule"));
+  for (const c of data.classes ?? []) {
+    const prog = mdTable(["Lvl", "HD", "Atk", "Phys", "Ment", "Evas", "Magic", "Luck"],
+      c.progression.map(p => [p.level, p.hitDice, p.attack >= 0 ? `+${p.attack}` : p.attack, ...Object.values(p.saves)]));
+    out.push(entry(c.name, "Rules", "Class", [
+      `**Prime Attributes** ${c.primeAttributes.join(", ")}`,
+      `**Class Skills** ${c.classSkills.join(", ")}`,
+      `**Bonus Skills** ${c.bonusSkills.join(", ")}`,
+      md(c.description),
+      `**Abilities** ${c.abilities.map(a => `[${a.name}] (${a.level})`).join(", ")}`,
+      prog
+    ].join("\n\n"), "class"));
+    for (const a of c.abilities) {
+      out.push(entry(a.name, "Abilities", `${c.name} ${a.level}`, `**${c.name}** level ${a.level} · **Cost** 1 Expertise\n\n${a.description}`, "ability"));
+    }
+  }
+  if (data.skills?.length) {
+    for (const s of data.skills) out.push(entry(s.name, "Rules", s.specialization ? "Skill (Specialization)" : "Skill", md(s.description), "skill"));
+  }
+  if (data.backgrounds?.length) {
+    out.push(entry("Backgrounds", "Rules", "Character Creation",
+      `Roll 1d8 and 1d10.\n\n${mdTable(["1d8/1d10", "Background", "Starting Skills"], data.backgrounds.map(b => [b.roll, b.name, b.skills.join(", ")]))}`, "rule"));
+  }
+  for (const d of data.deliria ?? []) out.push(entry(d.name, "Abilities", "Delirium", `**Delirium** (${d.roll})\n\n${d.description}`, "delirium"));
+
+  // Sorcery
+  for (const s of data.spells ?? []) {
+    out.push(entry(s.name, "Spells", `Spell Level ${s.level}`, `**Level** ${s.level} · **Cost** 1 Expertise or ${s.level} Madness · ${page(s.page)}\n\n${md(s.description)}`, "spell"));
+  }
+  for (const d of data.disciplines ?? []) {
+    const levels = d.levels.map(l => `**${l.level}.** ${l.description}`).join("\n\n");
+    out.push(entry(d.name, "Powers", "Discipline", `**Cost** 1 Expertise, or Madness = discipline level + 1 — see [Occult Disciplines]\n\n${md(d.description)}\n\n${levels}`, "discipline"));
+  }
+
+  // Equipment
+  for (const w of data.weapons ?? []) {
+    const flags = [w.subdual && "subdual damage", w.burst && "burst fire", w.suppress && "suppressive fire", w.slowReload && "extra action to reload"].filter(Boolean);
+    const head = `**Damage** ${w.damage} · **Slaughter** ${w.slaughter || "none"} · **Attribute** ${w.attributes.map(a => a[0].toUpperCase() + a.slice(1)).join("/")}`
+      + (w.range ? ` · **Range** ${w.range} m` : "") + (w.magazine ? ` · **Mag** ${w.magazine}` : "") + ` · **Cost** ${w.cost}`;
+    out.push(entry(w.name, "Items", weaponSource(w), [head, flags.length ? `*${flags.join(", ")}*` : "", w.description].filter(Boolean).join("\n\n"), "weapon"));
+  }
+  for (const a of data.armor ?? []) {
+    const ac = a.shield ? `-${a.shieldBonus} bonus` : `${a.ac}`;
+    const notes = [a.noFirearms && "ineffective against firearms and explosives", a.noMelee && "ineffective against melee weapons"].filter(Boolean);
+    out.push(entry(a.name, "Items", "Armor", [`**AC** ${ac} · **Enc** ${a.enc} · **Cost** ${a.cost}`, notes.length ? `*${notes.join("; ")}*` : "", a.description].filter(Boolean).join("\n\n"), "armor"));
+  }
+  for (const g of data.gear ?? []) {
+    out.push(entry(g.name, "Items", "Gear", `**Enc** ${g.enc === 0 ? "—" : g.enc}${g.bundle ? " (bundles of 3)" : ""} · **Cost** ${g.cost}`, "gear"));
+  }
+  for (const v of data.vehicles ?? []) {
+    out.push(entry(v.name, "Items", "Vehicle", `**Speed** ${v.speed} · **Armor** ${v.armor} · **HP** ${v.hp} · **Crew** ${v.crew} · **Cost** ${v.cost}`, "vehicle"));
+  }
+
+  // Location tags
+  for (const t of data.tags ?? []) {
+    const list = (label, items) => (items?.length ? `**${label}:** ${items.join("; ")}` : "");
+    out.push(entry(t.name, "Other", "Location Tag", [t.description, list("Enemies", t.enemies), list("Friends", t.friends),
+      list("Schemes", t.schemes), list("Secrets", t.secrets), list("Places", t.places)].filter(Boolean).join("\n\n"), "tag"));
+  }
+
+  // Random tables, as entries with a rollable die
+  for (const t of data.tables ?? []) {
+    const rows = t.results.map(r => [r.range[0] === r.range[1] ? r.range[0] : `${r.range[0]}–${r.range[1]}`, r.text]);
+    out.push(entry(t.name, "Other", `Table: ${t.chapter}`, `Roll ${t.formula} · ${t.section} · ${page(t.page)}\n\n${mdTable([t.formula, "Result"], rows)}`, "table"));
+  }
+  return out;
+}
+
+/* -------------------------------------------- */
+/*  Bestiary                                    */
+/* -------------------------------------------- */
+
+function monster(c) {
+  const hdKeeper = c.hdValue === 0 ? "0" : c.hdValue === 0.5 ? "½" : String(c.hdValue);
+  const hp = c.hdValue === 0 ? 1 : c.hdValue === 0.5 ? 2 : Math.floor(4.5 * c.hdValue);
+  const attacks = c.attacks.map(a => {
+    const byWeapon = /^(wpn|by weapon|weapon)$/i.test(a.damage);
+    return { label: a.name, count: a.count, toHit: a.bonus, damage: byWeapon ? "" : a.damage, note: byWeapon ? "by weapon" : "", raw: "" };
+  });
+  const attacksText = attacks.map(a => `${a.label} ${a.toHit >= 0 ? "+" : ""}${a.toHit}${a.count > 1 ? ` x${a.count}` : ""} (${a.damage || a.note || "—"})`).join(", ");
+  const hdText = c.hdValue === 0 ? "1 hp (1hp)" : c.hdValue === 0.5 ? "1d4 hp (2hp)" : `${c.hdValue} (${hp}hp)`;
+  const id = `slpdf-${slug(c.name)}`;
+  const desc = String(c.description ?? "").split(/\n\n/)[0] ?? "";
+  return {
+    name: c.name,
+    desc: c.description ?? "",
+    ac: { asc: null, desc: c.ac ?? 9, thac0: null },
+    hd: hdKeeper,
+    attacks,
+    move: c.move ?? "",
+    skill: c.skill ?? 0,
+    madness: c.madness ?? "None",
+    abilities: c.special ? [c.special] : [],
+    id,
+    ref: `slpdf:monster:${slug(c.name)}`,
+    source: "sl",
+    mundaneImmune: !!c.mundaneImmune,
+    hdNum: c.hdValue,
+    hp,
+    align: "",
+    xp: null,
+    moraleML: c.morale ?? 7,
+    atkBonus: attacks[0]?.toHit ?? 0,
+    attacksText,
+    stats: null,
+    saveTargets: { Save: c.save },
+    savesText: `${c.save}+`,
+    slaughterDie: c.slaughter || "1d6",
+    raw: [c.name, desc, `AC ${c.ac}${c.mundaneImmune ? "*" : ""}, HD ${hdText}, Atk ${attacksText}, Move ${c.move}, ML ${c.morale}, Skill ${c.skill >= 0 ? "+" : ""}${c.skill}, Madness ${c.madness}, Slaughter ${c.slaughter || "1d6"}, Save ${c.save}+`].filter(Boolean).join("\n")
+  };
+}
+
+/**
+ * @param {object} data   Output of parseBook().
+ * @returns {{pack: {name: string, system: string}, compendium: object[], monsters: object[]}}
+ */
+export function toKeeperPack(data) {
+  return {
+    pack: { name: "Silent Legions (from your PDF)", system: "sl", version: data.meta?.parserVersion ?? 1, createdAt: data.meta?.createdAt },
+    compendium: compendium(data),
+    monsters: (data.creatures ?? []).map(monster)
+  };
+}

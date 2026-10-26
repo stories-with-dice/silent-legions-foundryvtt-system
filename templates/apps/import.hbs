@@ -1,0 +1,30 @@
+<div class="sl-import-body">
+  <p>{{localize "SL.Import.intro"}}</p>
+  <div class="form-group">
+    <label>{{localize "SL.Import.file"}}</label>
+    <div class="form-fields"><input type="file" name="file" accept=".pdf,.json"></div>
+  </div>
+
+  {{#if isGM}}
+  <fieldset>
+    <legend>{{localize "SL.Import.packs"}}</legend>
+    <div class="sl-import-packs">
+      {{#each packs}}
+      <label class="sl-check"><input type="checkbox" name="pack.{{key}}" checked> {{localize label}}</label>
+      {{/each}}
+    </div>
+    <label class="sl-check"><input type="checkbox" name="uploadPdf"> {{localize "SL.Import.uploadPdf"}}</label>
+    <p class="hint">{{localize "SL.Import.replaceHint"}}</p>
+  </fieldset>
+  {{/if}}
+
+  {{#if last}}<p class="hint">{{localize "SL.Import.last"}} {{last}} ({{counts}})</p>{{/if}}
+  <p class="sl-import-status"></p>
+
+  <footer class="form-footer">
+    {{#if isGM}}<button type="submit"><i class="fa-solid fa-file-import"></i> {{localize "SL.Import.run"}}</button>{{/if}}
+    <button type="button" data-action="keeper"><i class="fa-solid fa-download"></i> {{localize "SL.Import.keeper"}}</button>
+    <button type="button" data-action="json"><i class="fa-solid fa-code"></i> {{localize "SL.Import.json"}}</button>
+  </footer>
+  <p class="hint">{{localize "SL.Import.privacy"}}</p>
+</div>

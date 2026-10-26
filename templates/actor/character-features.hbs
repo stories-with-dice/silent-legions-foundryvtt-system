@@ -1,0 +1,34 @@
+<section class="tab {{tab.cssClass}}" data-group="primary" data-tab="features">
+  <h3 class="sl-section">{{localize "SL.Abilities"}}
+    {{#if editable}}<a class="sl-add" data-action="itemCreate" data-type="ability"><i class="fa-solid fa-plus"></i></a>{{/if}}</h3>
+  <ol class="sl-list">
+    {{#each abilities}}
+    <li class="sl-item draggable {{#if locked}}sl-locked{{/if}}" data-item-id="{{id}}">
+      <a class="sl-item-name" data-action="itemUse" data-tooltip="{{localize 'SL.UseAbility'}}"><img src="{{item.img}}" alt="">{{item.name}}</a>
+      <span class="sl-hint">{{#if item.system.class}}{{localize (lookup (lookup @root.config.classes item.system.class) "label")}} {{item.system.level}}{{/if}}</span>
+      <span class="sl-hint">{{#if item.system.cost}}{{item.system.cost}} {{localize "SL.Expertise"}}{{/if}}</span>
+      <span class="sl-controls">
+        <a data-action="itemEdit"><i class="fa-solid fa-pen"></i></a>
+        <a data-action="itemDelete"><i class="fa-solid fa-trash"></i></a>
+      </span>
+    </li>
+    {{/each}}
+  </ol>
+
+  <h3 class="sl-section">{{localize "SL.Deliria"}}
+    {{#if editable}}<a class="sl-add" data-action="itemCreate" data-type="delirium"><i class="fa-solid fa-plus"></i></a>{{/if}}
+    <a class="sl-add" data-action="roll" data-roll-type="delirium" data-tooltip="{{localize 'SL.DeliriumHint'}}"><i class="fa-solid fa-dice-d20"></i></a>
+  </h3>
+  <ol class="sl-list">
+    {{#each deliria}}
+    <li class="sl-item draggable" data-item-id="{{id}}">
+      <a class="sl-item-name" data-action="itemUse"><img src="{{img}}" alt="">{{name}}</a>
+      <span class="sl-controls">
+        <a data-action="itemEdit"><i class="fa-solid fa-pen"></i></a>
+        <a data-action="itemDelete"><i class="fa-solid fa-trash"></i></a>
+      </span>
+    </li>
+    {{/each}}
+  </ol>
+  <p class="sl-hint">{{localize "SL.DeliriumHint"}}</p>
+</section>
