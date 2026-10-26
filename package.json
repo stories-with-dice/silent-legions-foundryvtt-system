@@ -1,6 +1,6 @@
 {
   "name": "silent-legions-foundry-vtt",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "description": "Minimal Foundry VTT v13 system for Silent Legions, with a PDF importer that also writes an RPG Keeper content pack.",

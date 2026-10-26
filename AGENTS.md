@@ -34,6 +34,7 @@ Rules for AI agents and contributors. The user guide is [README.md](README.md).
 | `module/import/keeper-pack.mjs` | Book data → RPG Keeper content pack |
 | `tools/extract.mjs` | CLI: PDF → `output/silent-legions-data.json` and `output/keeper-sl-pack.json` |
 | `templates/`, `styles/`, `lang/en.json` | Handlebars templates, CSS, English strings |
+| `.github/workflows/release.yml` | "Release" workflow: tests, stamps version/manifest/download into `system.json`, zips the system, (re)creates the GitHub release |
 | `test/parser.test.mjs` | `node:test` suite. Book tests skip without the PDF |
 
 ## Data flow of an import

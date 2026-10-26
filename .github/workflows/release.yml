@@ -1,0 +1,146 @@
+# Build a Foundry VTT release of the Silent Legions system.
+#
+# Two ways to start it:
+# - Push a tag:  git tag v1.2.0 && git push origin v1.2.0
+# - Actions tab → "Release" → Run workflow, with a version such as 1.2.0.
+#   This builds from the chosen branch and REPLACES an existing release (and tag)
+#   with the same version.
+#
+# The release gets two files:
+# - system.json        with version, manifest, and download set for this release
+# - silent-legions.zip the system folder that Foundry installs
+#
+# Manifest URL for Foundry (always points to the newest release):
+#   https://github.com/<owner>/<repo>/releases/latest/download/system.json
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version without the v, for example 1.0.0. An existing release with this version is replaced."
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Work out the version
+        id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            version="${INPUT_VERSION#v}"
+          else
+            version="${GITHUB_REF_NAME#v}"
+          fi
+          if ! printf '%s' "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.]+)?$'; then
+            echo "::error::Version '$version' is not like 1.2.3"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run tests
+        run: |
+          npm ci
+          npm test
+
+      - name: Set version, manifest, and download in system.json
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          base="https://github.com/$REPO"
+          jq --arg v "$VERSION" \
+             --arg url "$base" \
+             --arg manifest "$base/releases/latest/download/system.json" \
+             --arg download "$base/releases/download/$TAG/silent-legions.zip" \
+             '.version = $v | .url = $url | .manifest = $manifest | .download = $download' \
+             system.json > system.json.tmp
+          mv system.json.tmp system.json
+          cat system.json
+
+      - name: Build the zip
+        run: |
+          mkdir -p dist
+          zip -r dist/silent-legions.zip \
+            system.json module templates styles lang README.md LICENSE CHANGELOG.md
+          cp system.json dist/system.json
+          unzip -l dist/silent-legions.zip | tail -3
+
+      - name: Remove an existing release with the same version (manual runs)
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if gh release view "$TAG" --repo "$REPO" > /dev/null 2>&1; then
+            echo "Replacing release $TAG"
+            gh release delete "$TAG" --repo "$REPO" --yes --cleanup-tag
+          elif git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null; then
+            echo "Removing tag $TAG without a release"
+            git push origin ":refs/tags/$TAG"
+          fi
+
+      - name: Remove an existing release for the pushed tag (tag pushes)
+        if: github.event_name == 'push'
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if gh release view "$TAG" --repo "$REPO" > /dev/null 2>&1; then
+            gh release delete "$TAG" --repo "$REPO" --yes
+          fi
+
+      - name: Create the release
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          manifest="https://github.com/$REPO/releases/latest/download/system.json"
+          cat > notes.md <<EOF
+          ## Install in Foundry VTT
+
+          Setup → Game Systems → **Install System** → paste this **Manifest URL**:
+
+          \`\`\`
+          $manifest
+          \`\`\`
+
+          This URL always points to the newest release, so Foundry can update the system.
+          To install exactly version $VERSION, use:
+
+          \`\`\`
+          https://github.com/$REPO/releases/download/$TAG/system.json
+          \`\`\`
+
+          Requires Foundry VTT v13. The system has no book text: import spells, items,
+          creatures, and tables from your own PDF with **Import from PDF** in the Compendium sidebar.
+          EOF
+          gh release create "$TAG" dist/system.json dist/silent-legions.zip \
+            --repo "$REPO" \
+            --target "$GITHUB_SHA" \
+            --title "$TAG" \
+            --notes-file notes.md \
+            --latest
+          echo "### Manifest URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "\`$manifest\`" >> "$GITHUB_STEP_SUMMARY"

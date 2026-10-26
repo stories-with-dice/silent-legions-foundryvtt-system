@@ -2,44 +2,107 @@
   "id": "silent-legions",
   "title": "Silent Legions",
   "description": "Minimal unofficial system for Silent Legions, the Lovecraftian horror RPG by Kevin Crawford (Sine Nomine Publishing). Ships rules mechanics only; import spells, items, creatures, and tables from your own copy of the PDF.",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "compatibility": {
     "minimum": "13",
     "verified": "13.351"
   },
   "authors": [
-    { "name": "Cristian" }
+    {
+      "name": "Cristian"
+    }
   ],
-  "esmodules": ["module/silent-legions.mjs"],
-  "styles": ["styles/silent-legions.css"],
+  "esmodules": [
+    "module/silent-legions.mjs"
+  ],
+  "styles": [
+    "styles/silent-legions.css"
+  ],
   "languages": [
-    { "lang": "en", "name": "English", "path": "lang/en.json" }
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
   ],
   "documentTypes": {
     "Actor": {
-      "character": { "htmlFields": ["biography", "notes"] },
-      "npc": { "htmlFields": ["description"] }
+      "character": {
+        "htmlFields": [
+          "biography",
+          "notes"
+        ]
+      },
+      "npc": {
+        "htmlFields": [
+          "description"
+        ]
+      }
     },
     "Item": {
-      "skill": { "htmlFields": ["description"] },
-      "weapon": { "htmlFields": ["description"] },
-      "armor": { "htmlFields": ["description"] },
-      "gear": { "htmlFields": ["description"] },
-      "vehicle": { "htmlFields": ["description"] },
-      "spell": { "htmlFields": ["description"] },
-      "discipline": { "htmlFields": ["description"] },
-      "ability": { "htmlFields": ["description"] },
-      "delirium": { "htmlFields": ["description"] },
-      "background": { "htmlFields": ["description"] }
+      "skill": {
+        "htmlFields": [
+          "description"
+        ]
+      },
+      "weapon": {
+        "htmlFields": [
+          "description"
+        ]
+      },
+      "armor": {
+        "htmlFields": [
+          "description"
+        ]
+      },
+      "gear": {
+        "htmlFields": [
+          "description"
+        ]
+      },
+      "vehicle": {
+        "htmlFields": [
+          "description"
+        ]
+      },
+      "spell": {
+        "htmlFields": [
+          "description"
+        ]
+      },
+      "discipline": {
+        "htmlFields": [
+          "description"
+        ]
+      },
+      "ability": {
+        "htmlFields": [
+          "description"
+        ]
+      },
+      "delirium": {
+        "htmlFields": [
+          "description"
+        ]
+      },
+      "background": {
+        "htmlFields": [
+          "description"
+        ]
+      }
     }
   },
-  "grid": { "distance": 1, "units": "m" },
+  "grid": {
+    "distance": 1,
+    "units": "m"
+  },
   "primaryTokenAttribute": "hp",
   "secondaryTokenAttribute": "madness",
   "initiative": "1d8",
   "license": "LICENSE",
   "readme": "README.md",
-  "url": "",
-  "manifest": "",
-  "download": ""
+  "url": "https://github.com/stories-with-dice/silent-legions-foundryvtt-system",
+  "manifest": "https://github.com/stories-with-dice/silent-legions-foundryvtt-system/releases/latest/download/system.json",
+  "download": "https://github.com/stories-with-dice/silent-legions-foundryvtt-system/releases/latest/download/silent-legions.zip",
+  "bugs": "https://github.com/stories-with-dice/silent-legions-foundryvtt-system/issues"
 }

@@ -37,6 +37,16 @@ tables. You can type those in by hand, or import them from **your own copy of th
 
 ## Install
 
+In Foundry: Setup → Game Systems → **Install System**, and paste this **Manifest URL**:
+
+```
+https://github.com/stories-with-dice/silent-legions-foundryvtt-system/releases/latest/download/system.json
+```
+
+The URL always points to the newest release, so Foundry offers updates. Foundry v13 is needed.
+
+### Install from a local folder (development)
+
 1. Put this folder (or a symlink to it) in Foundry's `Data/systems/silent-legions`.
    On macOS: `~/Library/Application Support/FoundryVTT/Data/systems/silent-legions`.
 2. Restart Foundry or reload the setup screen. Create a world with the "Silent Legions" system.
@@ -132,3 +142,18 @@ npm test
 ```
 
 The book tests run only when `Silent Legions.pdf` is in the repository folder.
+
+## Make a release
+
+The GitHub Actions workflow `.github/workflows/release.yml` ("Release") builds a release with two
+files: `system.json` and `silent-legions.zip`. It runs the tests, writes the version, manifest
+URL, and download URL into the released `system.json`, and puts the manifest URL in the release
+notes and the run summary. Start it in one of two ways:
+
+- **Actions tab → Release → Run workflow**, with a version such as `1.0.1`. It builds from the
+  chosen branch. If a release with that version exists, the workflow deletes that release and
+  its tag first, then creates it again on the current commit.
+- **Push a tag**: `git tag v1.0.1` and `git push origin v1.0.1`.
+
+Raise `version` in `system.json` and add a `CHANGELOG.md` entry before you release, so the
+repository matches the release.

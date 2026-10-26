@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0
+
+- First public release. The "Release" GitHub workflow publishes `system.json` and
+  `silent-legions.zip`; Foundry installs from the manifest URL
+  `https://github.com/stories-with-dice/silent-legions-foundryvtt-system/releases/latest/download/system.json`.
+
 ## 0.1.0
 
 - First version for Foundry VTT v13: character and NPC sheets, ten item types, skill checks,
