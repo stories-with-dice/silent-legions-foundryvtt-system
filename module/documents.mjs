@@ -114,4 +114,27 @@ export class SLTableResult extends TableResult {
     if (!label) return html;
     return `<div class="sl-table-result"><div class="sl-table-label">${foundry.utils.escapeHTML(label)}</div>${html}</div>`;
   }
+
+  /**
+   * Foundry's version calls fromUuidSync, which throws for a page inside a compendium journal
+   * (the Location Tags results link to pages in `world.sl-tags`). That error stops the table
+   * sheet from rendering, so build the link from the UUID alone for those results.
+   */
+  documentToAnchor() {
+    if (this.type === "text" || !this.documentUuid) return null;
+    const parsed = foundry.utils.parseUuid(this.documentUuid) ?? {};
+    if (!(parsed.collection instanceof foundry.documents.collections.CompendiumCollection) || !parsed.embedded?.length) {
+      return super.documentToAnchor();
+    }
+    const div = document.createElement("div");
+    div.innerHTML = this.description;
+    return foundry.applications.ux.TextEditor.implementation.createAnchor({
+      classes: ["content-link"],
+      attrs: { draggable: "true" },
+      dataset: { link: "", uuid: this.documentUuid, id: parsed.id, type: parsed.type, pack: parsed.collection.metadata.id,
+        tooltip: game.i18n.localize(`DOCUMENT.${parsed.type}`) },
+      name: this.name || div.textContent.trim() || game.i18n.localize("Unknown"),
+      icon: CONFIG[parsed.type]?.sidebarIcon ?? "fa-solid fa-file-lines"
+    });
+  }
 }
