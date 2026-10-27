@@ -144,16 +144,20 @@ It writes `output/silent-legions-data.json` and `output/keeper-sl-pack.json`. Op
 1. In RPG Keeper, click **Import** and choose `keeper-sl-pack.json`.
 2. Confirm "Add Silent Legions (from your PDF) to Silent Legions?".
 
-Keeper adds 534 Compendium entries (rules, class abilities, deliria, spells, disciplines,
-equipment, location tags, the random tables as rollable entries, and the generators as entries
-that link to the tables they roll on) and 58 Bestiary monsters to
-the Silent Legions system. Keeper never replaces entries during a pack import:
+Keeper adds to the Silent Legions system:
 
-- An entry with the same name and category as one you already have is skipped. Campaigns that
-  have Keeper's built-in Silent Legions seed keep its paraphrased text for about 95 entries
-  (spells, disciplines, most equipment).
-- Keeper matches monsters by `ref`, not by name. In a campaign with the built-in seed, 51
-  creatures show twice: the seed version and the book version.
+- 231 Compendium entries: rules and quick reference, classes, class abilities, skills,
+  backgrounds, deliria, spells, disciplines, equipment, and location tags.
+- 58 Bestiary monsters.
+- 303 tables in the Tables tab: the 243 book and helper tables, and the 60 generators (master
+  tables) that roll on them. A generator's result is an outline: one line per sub-table
+  ("Need: …"), and a generator step is indented under its label ("Effect", then its effect and
+  word). Click a part of the result, or a label, to roll only that part again.
+
+Keeper has no built-in Silent Legions data, so this pack is its only source. Keeper never
+replaces anything during a pack import: it skips an entry with the same name and category, a
+monster with the same `ref`, and a table with the same name. To load a newer pack, delete the
+old items in Keeper first.
 
 Keep the pack file out of the osr_keeper repository: it holds book text, and that repository is
 public.

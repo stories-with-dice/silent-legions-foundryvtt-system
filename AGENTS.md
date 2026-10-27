@@ -34,6 +34,7 @@ Rules for AI agents and contributors. The user guide is [README.md](README.md).
 | `module/import/table-plan.mjs` | Master tables: which book tables roll together or branch to others, by table name ([docs/data-format.md](docs/data-format.md#table-plan)) |
 | `module/import/keeper-pack.mjs` | Book data → RPG Keeper content pack |
 | `tools/extract.mjs` | CLI: PDF → `output/silent-legions-data.json` and `output/keeper-sl-pack.json` |
+| `tools/keeper-fixture.mjs` | Writes osr_keeper's `test/fixtures/sl-pack.json` (made-up data in the pack shape) |
 | `templates/`, `styles/`, `lang/en.json` | Handlebars templates, CSS, English strings |
 | `.github/workflows/release.yml` | "Release" workflow: tests, stamps version/manifest/download into `system.json`, zips the system, (re)creates the GitHub release |
 | `test/parser.test.mjs` | `node:test` suite. Book tests skip without the PDF |
@@ -47,8 +48,12 @@ Rules for AI agents and contributors. The user guide is [README.md](README.md).
 3. Then one of these runs:
    - `importBook()` (`foundry-import.mjs`) deletes and recreates the world compendiums
      `world.sl-*` and saves the Madness table in the world setting `silent-legions.madnessCosts`.
-   - `toKeeperPack()` (`keeper-pack.mjs`) returns `{ pack, compendium, monsters }` in
-     osr_keeper's `data/seed-sl.json` shapes.
+   - `toKeeperPack()` (`keeper-pack.mjs`) returns `{ pack, compendium, monsters, tables }`:
+     osr_keeper's Compendium entry and Silent Legions monster shapes (abilities as
+     `{ name, text }`, attacks as `2 claw +3 (1d4)`), and tables in the text format of
+     osr_keeper's `js/table-syntax.js` (master tables use `[Table name]` lookups).
+     osr_keeper's `test/fixtures/sl-pack.json` is a small pack in this shape: regenerate it when
+     the shape changes.
 
 ## Conventions
 

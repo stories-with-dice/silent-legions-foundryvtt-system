@@ -2,10 +2,12 @@
  * Convert parsed book data (sl-parser.mjs) into an RPG Keeper content pack.
  *
  * RPG Keeper (osr_keeper repo) imports a file with a `pack` header as a content pack:
- * it adds the Compendium entries and Bestiary monsters to the "sl" system, skips
- * entries it already has (same name and category), and never replaces anything.
- * The shapes follow osr_keeper's data/seed-sl.json. This file has no Foundry or
- * Node dependencies.
+ * it adds the Compendium entries, Bestiary monsters, and random tables (Tables tab)
+ * to the "sl" system, skips what it already has (an entry with the same name and
+ * category, a monster with the same ref, a table with the same name), and never
+ * replaces anything. Monsters use Keeper's Silent Legions def shape; tables use the
+ * text format of osr_keeper's js/table-syntax.js. This file has no Foundry or Node
+ * dependencies.
  */
 
 import { buildTablePlan } from "./table-plan.mjs";
@@ -98,20 +100,36 @@ function compendium(data) {
       list("Schemes", t.schemes), list("Secrets", t.secrets), list("Places", t.places)].filter(Boolean).join("\n\n"), "tag"));
   }
 
-  // Random tables, as entries with a rollable die. Spell and other links become [Name] cross-links.
+  return out;
+}
+
+/* -------------------------------------------- */
+/*  Random tables (Keeper's Tables tab)         */
+/* -------------------------------------------- */
+
+const range = r => (r.range[0] === r.range[1] ? `${r.range[0]}` : `${r.range[0]}-${r.range[1]}`);
+// One line of table text: no line breaks, and no [ ] (Keeper reads [Name] as a lookup).
+const line = s => String(s ?? "").replace(/\s*\n\s*/g, " ").replace(/\[/g, "(").replace(/\]/g, ")").trim();
+const comment = s => (s ? `# ${line(s)}\n` : "");
+
+// Book tables and helper tables: "1d12" and one "range: text" line per result.
+// Links (spells, deliria, tags, backgrounds) stay as plain text.
+// Master tables: "Roll on each" is one 1d1 line with a [Name] lookup per
+// sub-table; "Branch" rows end with a lookup of the table they lead to.
+function tables(data) {
   const plan = buildTablePlan(data);
   const names = new Map([...plan.tables, ...plan.masters].map(t => [t.id, t.name]));
+  const out = [];
   for (const t of plan.tables) {
-    // Backgrounds have no Keeper entry of their own (they are in "Backgrounds"), so they stay text.
-    const rows = t.results.map(r => [r.range[0] === r.range[1] ? r.range[0] : `${r.range[0]}–${r.range[1]}`, r.link && r.link.kind !== "background" ? `[${r.link.name}]${r.text !== r.link.name ? ` ${r.text.replace(r.link.name, "").replace(/^\s*—\s*/, "— ")}` : ""}` : r.text]);
-    out.push(entry(t.name, "Other", `Table: ${t.folder}`, `Roll ${t.formula} · ${t.description}\n\n${mdTable([t.formula, "Result"], rows)}`, "table"));
+    const rows = t.results.map(r => `${range(r)}: ${line(r.text)}`);
+    out.push({ name: t.name, tag: t.folder, system: "sl", source: `${comment(t.description)}${t.formula}\n${rows.join("\n")}\n` });
   }
-  // Generators (Foundry master tables): which tables to roll, as cross-links.
   for (const m of plan.masters) {
-    const body = m.kind === "all"
-      ? `Roll on each:\n\n${m.results.map(r => `- [${names.get(r.ref)}]`).join("\n")}`
-      : `Roll ${m.formula}, then roll on the table it names:\n\n${mdTable([m.formula, "Result", "Then roll"], m.results.map(r => [r.range[0] === r.range[1] ? r.range[0] : `${r.range[0]}–${r.range[1]}`, r.text, `[${names.get(r.ref)}]`]))}`;
-    out.push(entry(m.name, "Other", m.top ? "Generator" : "Generator Step", `${m.description}\n\n${body}`, "generator"));
+    const rows = m.kind === "all"
+      ? [`1: ${m.results.map(r => `${line(r.label)}: [${names.get(r.ref)}]`).join("; ")}`]
+      : m.results.map(r => `${range(r)}: ${line(r.text) ? `${line(r.text)} — ` : ""}[${names.get(r.ref)}]`);
+    const formula = m.kind === "all" ? "1d1" : m.formula;
+    out.push({ name: m.name, tag: m.folder, system: "sl", source: `${comment(m.description)}${formula}\n${rows.join("\n")}\n` });
   }
   return out;
 }
@@ -127,7 +145,8 @@ function monster(c) {
     const byWeapon = /^(wpn|by weapon|weapon)$/i.test(a.damage);
     return { label: a.name, count: a.count, toHit: a.bonus, damage: byWeapon ? "" : a.damage, note: byWeapon ? "by weapon" : "", raw: "" };
   });
-  const attacksText = attacks.map(a => `${a.label} ${a.toHit >= 0 ? "+" : ""}${a.toHit}${a.count > 1 ? ` x${a.count}` : ""} (${a.damage || a.note || "—"})`).join(", ");
+  // Keeper's own format (js/monster-form.js): "2 claw +3 (1d4)".
+  const attacksText = attacks.map(a => `${a.count > 1 ? `${a.count} ` : ""}${a.label} ${a.toHit >= 0 ? "+" : ""}${a.toHit} (${a.damage || a.note || "—"})`).join(", ");
   const hdText = c.hdValue === 0 ? "1 hp (1hp)" : c.hdValue === 0.5 ? "1d4 hp (2hp)" : `${c.hdValue} (${hp}hp)`;
   const id = `slpdf-${slug(c.name)}`;
   const desc = String(c.description ?? "").split(/\n\n/)[0] ?? "";
@@ -140,7 +159,7 @@ function monster(c) {
     move: c.move ?? "",
     skill: c.skill ?? 0,
     madness: c.madness ?? "None",
-    abilities: c.special ? [c.special] : [],
+    abilities: c.special ? [{ name: "", text: c.special }] : [],
     id,
     ref: `slpdf:monster:${slug(c.name)}`,
     source: "sl",
@@ -162,12 +181,13 @@ function monster(c) {
 
 /**
  * @param {object} data   Output of parseBook().
- * @returns {{pack: {name: string, system: string}, compendium: object[], monsters: object[]}}
+ * @returns {{pack: {name: string, system: string}, compendium: object[], monsters: object[], tables: object[]}}
  */
 export function toKeeperPack(data) {
   return {
     pack: { name: "Silent Legions (from your PDF)", system: "sl", version: data.meta?.parserVersion ?? 1, createdAt: data.meta?.createdAt },
     compendium: compendium(data),
-    monsters: (data.creatures ?? []).map(monster)
+    monsters: (data.creatures ?? []).map(monster),
+    tables: tables(data)
   };
 }

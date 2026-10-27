@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- RPG Keeper pack: the 243 book and helper tables and the 60 generators are now Keeper tables
+  (a `tables` list in Keeper's table text format), so they roll in Keeper's Tables tab. They are
+  no longer Compendium entries (231 entries now).
+- RPG Keeper pack: monster abilities are `{ name, text }` objects (Keeper showed "undefined"
+  for the old strings), and attacks use Keeper's format (`2 claw +3 (1d4)`).
+- RPG Keeper pack: a branch row with no text of its own has no stray " — " before its lookup.
+
 ## 1.1.0
 
 - Master tables: 22 generators and 38 generator steps that roll the book's tables together or

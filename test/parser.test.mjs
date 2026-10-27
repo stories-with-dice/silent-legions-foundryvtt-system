@@ -74,8 +74,47 @@ test("toKeeperPack writes the osr_keeper content pack shape", () => {
   assert.equal(m.hd, "3");
   assert.equal(m.hp, 13);
   assert.deepEqual(m.saveTargets, { Save: 14 });
-  assert.equal(m.attacksText, "claw +3 x2 (1d4)");
+  assert.equal(m.attacksText, "2 claw +3 (1d4)");
   assert.ok(m.mundaneImmune);
+  assert.deepEqual(m.abilities, []);
+  const undead = toKeeperPack({ ...tinyData, creatures: [{ ...tinyData.creatures[0], special: "Undead" }] }).monsters[0];
+  assert.deepEqual(undead.abilities, [{ name: "", text: "Undead" }], "Keeper reads abilities as { name, text }");
+});
+
+// Keeper's table text (osr_keeper js/table-syntax.js): a die line, then "lo[-hi]: text" lines.
+function checkKeeperTables(tables) {
+  const names = new Set(tables.map(t => t.name.toLowerCase()));
+  assert.equal(names.size, tables.length, "table names are unique (Keeper skips a second one)");
+  for (const t of tables) {
+    assert.equal(t.system, "sl");
+    assert.ok(t.tag, `${t.name}: tag`);
+    assert.doesNotMatch(t.name, /[[\]]/, `${t.name}: no [ ] in a name`);
+    const lines = t.source.split("\n").filter(l => l && !l.startsWith("#"));
+    const [, n, sides] = lines[0].match(/^(\d*)d(\d+)$/) ?? [];
+    assert.ok(sides, `${t.name}: die line "${lines[0]}"`);
+    const max = (Number(n) || 1) * Number(sides), min = Number(n) || 1;
+    const hit = new Set();
+    for (const l of lines.slice(1)) {
+      const m = l.match(/^(\d+)(?:-(\d+))?: (.*)$/);
+      assert.ok(m, `${t.name}: entry "${l}"`);
+      for (let v = Number(m[1]); v <= Number(m[2] ?? m[1]); v++) hit.add(v);
+      for (const [, ref] of m[3].matchAll(/\[([^\]]+)\]/g)) assert.ok(names.has(ref.toLowerCase()), `${t.name} → [${ref}]`);
+    }
+    for (let v = min; v <= max; v++) assert.ok(hit.has(v), `${t.name}: no entry for ${v}`);
+  }
+}
+
+test("toKeeperPack writes the random tables in Keeper's table format", () => {
+  const table = (name, n = 4) => ({ name, chapter: "Test", part: "", section: "S", page: 10, formula: `1d${n}`, dice: `d${n}`,
+    results: [...Array(n).keys()].map(i => ({ range: [i + 1, i + 1], text: `${name} ${i + 1}` })) });
+  const pack = toKeeperPack({ ...tinyData, tables: [table("Number of Major Deities"), table("Pantheon Traits", 20)] });
+  const traits = pack.tables.find(t => t.name.endsWith("Pantheon Traits"));
+  assert.match(traits.source, /^# .*\n1d20\n1: Pantheon Traits 1\n2: /);
+  const pantheon = pack.tables.find(t => t.name === "Pantheon");
+  assert.equal(pantheon.tag, "Generators");
+  assert.match(pantheon.source, /\n1d1\n1: Number of Major Deities: \[[^\]]+\]; Pantheon Traits: \[[^\]]+\]\n$/);
+  checkKeeperTables(pack.tables.filter(t => !t.source.includes("[undefined]")));
+  assert.ok(!pack.compendium.some(e => /^(Generator|Table)/.test(e.source)), "tables are not Compendium entries");
 });
 
 test("Keeper entries never share a name and category (Keeper would skip one)", () => {
@@ -172,10 +211,16 @@ test("book: every master table finds its sub-tables", { skip: !hasPdf && "no PDF
   }
 });
 
-test("book: Keeper generator entries link only to entries in the pack", { skip: !hasPdf && "no PDF" }, async () => {
+test("book: Keeper entries link only to entries in the pack", { skip: !hasPdf && "no PDF" }, async () => {
   const pack = toKeeperPack(await book());
   const names = new Set(pack.compendium.map(e => e.name));
-  for (const e of pack.compendium.filter(x => /^(Generator|Table)/.test(x.source))) {
+  for (const e of pack.compendium) {
     for (const [, link] of e.body.matchAll(/\[([^\]]+)\]/g)) assert.ok(names.has(link), `${e.name} → [${link}]`);
   }
+});
+
+test("book: Keeper tables parse, cover their die, and every lookup names a table in the pack", { skip: !hasPdf && "no PDF" }, async () => {
+  const pack = toKeeperPack(await book());
+  assert.equal(pack.tables.length, 303);
+  checkKeeperTables(pack.tables);
 });
