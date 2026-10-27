@@ -55,6 +55,9 @@ Rules for AI agents and contributors. The user guide is [README.md](README.md).
      `{ name, origin, settings, output, system, source }`: `tableOutput(name, folder)` picks the
      output (Encounter, Entity, Location, Adventure, Group, Other) from `OUTPUT_BY_NAME`, then
      `OUTPUT_BY_FOLDER` (the book chapter), else Other. A new master table or chapter needs a rule.
+     The pack format is specified in osr_keeper's
+     [docs/content-pack-format.md](../osr_keeper/docs/content-pack-format.md): follow it when the
+     pack changes.
      osr_keeper's `test/fixtures/sl-pack.json` is a small pack in this shape: regenerate it when
      the shape changes.
 

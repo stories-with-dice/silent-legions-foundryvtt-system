@@ -157,10 +157,11 @@ Keeper adds to the Silent Legions system:
   filters: Entity (aliens, gods, NPCs, monsters), Group (cults, pantheons), Location (Kelipot,
   location tags), Adventure (scenes, templates, crimes), or Other (sorcery, artifacts, names).
 
-Keeper has no built-in Silent Legions data, so this pack is its only source. Keeper never
-replaces anything during a pack import: it skips an entry with the same name and category, a
-monster with the same `ref`, and a table with the same name. To load a newer pack, delete the
-old items in Keeper first.
+Keeper has no built-in Silent Legions data, so this pack is its only source. Import opens a
+window where you tick the items to add. Items you already have (same name) are skipped, unless
+you tick **Replace the items I already have**: use it to load a newer pack over an older one.
+The pack format is in osr_keeper's
+[docs/content-pack-format.md](../osr_keeper/docs/content-pack-format.md).
 
 Keep the pack file out of the osr_keeper repository: it holds book text, and that repository is
 public.
