@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+- Character creation wizard ("Create character" in the sheet header): attributes (3d6 in order or
+  the optional 14/11/7 array), background (from the imported compendium, rolled, or custom),
+  class and prime attribute, starting wealth, and all starting skill picks with the level-1
+  limit. It rolls hit points, sets Expertise, and adds the background and level-1 class ability.
+- Skills tab: every new character lists the 26 skills (untrained at level -1), in columns, with
+  filters for all, trained, and class skills. "Bonus skills" adds a class's starting skills.
+  The + button spends skill points at the book cost and checks the maximum skill level.
+- The system creates a names-only "SL: Skills" compendium in each world. The PDF import replaces it.
+- Drop a spell to learn it (Int/Occult vs 6 + level, Madness) and a discipline to learn it (1 skill
+  point, 5 Madness, or free if innate). Discipline buttons raise a level and master a level.
+- Level up into a new class checks the class's first two bonus skills.
+- 0 HP sets the "Mortally wounded" status on a character and "Dead" on an NPC.
+- Background skills "Artist" and "Persuasion" (book spellings) map to Art and Persuade.
+- Skill points can go below 0 (a discipline learned by "spending ahead").
+
 - RPG Keeper pack: each table has Keeper's filter fields: `origin` "Silent Legions", `settings`
   `["Modern", "Horror"]`, and an `output` for what it makes (aliens, gods, NPCs, and monsters are
   Entity; cults and pantheons are Group; Kelipot and location tags are Location; scenes and

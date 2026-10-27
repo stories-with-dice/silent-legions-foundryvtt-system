@@ -1,0 +1,78 @@
+<div class="sl-creation-body">
+  <div class="sl-scroll">
+    <h3 class="sl-section">1. {{localize "SL.Attributes"}}</h3>
+    <div class="sl-row">
+      <select name="method">
+        <option value="roll" {{#unless isArray}}selected{{/unless}}>{{localize "SL.Create.methodRoll"}}</option>
+        <option value="array" {{#if isArray}}selected{{/if}}>{{localize "SL.Create.methodArray"}}</option>
+      </select>
+      {{#unless isArray}}
+      <button type="button" data-action="rollAttributes"><i class="fa-solid fa-dice"></i> {{localize "SL.Create.rollAttributes"}}</button>
+      {{/unless}}
+    </div>
+    <div class="sl-attributes sl-creation-attrs">
+      {{#each attributes}}
+      <div class="sl-attr">
+        <label data-tooltip="{{localize label}}">{{abbr}}</label>
+        {{#if ../isArray}}
+        <select name="score-{{key}}">{{#each arrayOptions}}<option value="{{v}}" {{#if selected}}selected{{/if}}>{{v}}</option>{{/each}}</select>
+        {{else}}
+        <input type="number" name="score-{{key}}" value="{{value}}" min="3" max="18">
+        {{/if}}
+        <span class="sl-mod">{{#if raised}}{{final}} {{/if}}{{numberFormat mod sign=true}}</span>
+      </div>
+      {{/each}}
+    </div>
+    {{#if isArray}}
+    <p class="sl-hint {{#unless arrayOk}}sl-error{{/unless}}">{{localize "SL.Create.arrayHint"}}</p>
+    {{else}}
+    <p class="sl-hint">{{localize "SL.Create.rollHint"}}{{#if canReroll}} <strong>{{localize "SL.Create.canReroll"}}</strong>{{/if}}</p>
+    {{/if}}
+
+    <h3 class="sl-section">2. {{localize "SL.Background"}}</h3>
+    {{#if hasBackgrounds}}
+    <div class="sl-row">
+      <select name="background">
+        <option value="">{{localize "SL.Create.customBackground"}}</option>
+        {{#each backgrounds}}<option value="{{id}}" {{#if selected}}selected{{/if}}>{{name}}</option>{{/each}}
+      </select>
+      <button type="button" data-action="rollBackground"><i class="fa-solid fa-dice"></i> {{localize "SL.Create.rollBackground"}}</button>
+    </div>
+    {{else}}
+    <p class="sl-hint">{{localize "SL.Create.noBackgrounds"}}</p>
+    {{/if}}
+    <div class="sl-row">
+      <label class="sl-wide">{{localize "SL.Name"}} <input type="text" name="bgName" value="{{state.bgName}}"></label>
+    </div>
+    <div class="sl-row">
+      <label class="sl-wide">{{localize "SL.Skills"}} <input type="text" name="bgSkills" value="{{state.bgSkills}}" placeholder="Culture/Home, History, Any One Skill"></label>
+    </div>
+
+    <h3 class="sl-section">3. {{localize "SL.ClassLabel"}}</h3>
+    <div class="sl-row">
+      <select name="cls">{{#each classes}}<option value="{{key}}" {{#if selected}}selected{{/if}}>{{localize label}}</option>{{/each}}</select>
+      <span class="sl-hint">{{localize "SL.Create.hitDie"}} 1d{{cls.hitDie}}</span>
+    </div>
+    <p class="sl-hint">{{localize "SL.Create.classSkills"}}: {{cls.skills}}</p>
+    <div class="sl-row">
+      <label>{{localize "SL.Create.prime"}}
+        <select name="prime">
+          <option value="">—</option>
+          {{#each cls.primes}}<option value="{{key}}" {{#if selected}}selected{{/if}}>{{localize label}} ({{value}} → 14)</option>{{/each}}
+        </select>
+      </label>
+    </div>
+
+    <h3 class="sl-section">4. {{localize "SL.WealthLabel"}}</h3>
+    <div class="sl-row">
+      <select name="wealth">{{#each wealthOptions}}<option value="{{key}}" {{#if selected}}selected{{/if}}>{{localize label}}: {{localize hint}}</option>{{/each}}</select>
+    </div>
+
+    <h3 class="sl-section">5. {{localize "SL.Skills"}}</h3>
+    <p class="sl-hint">{{localize "SL.Picks.hint"}}</p>
+    {{{picksHtml}}}
+  </div>
+  <footer class="sl-creation-footer">
+    <button type="button" data-action="finish"><i class="fa-solid fa-check"></i> {{localize "SL.Create.finish"}}</button>
+  </footer>
+</div>

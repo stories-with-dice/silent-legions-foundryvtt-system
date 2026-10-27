@@ -1,5 +1,6 @@
 <section class="tab {{tab.cssClass}}" data-group="primary" data-tab="sorcery">
   <p class="sl-hint">{{localize "SL.SorceryHint"}}</p>
+  <p class="sl-hint">{{localize "SL.LearnHint"}}</p>
   <h3 class="sl-section">{{localize "SL.Spells"}}
     {{#if editable}}<a class="sl-add" data-action="itemCreate" data-type="spell"><i class="fa-solid fa-plus"></i></a>{{/if}}</h3>
   {{#each spellLevels}}
@@ -28,6 +29,10 @@
       <span>{{localize "SL.Level"}} <input type="number" class="sl-small" data-item-field="system.level" value="{{system.level}}" min="0" max="4"></span>
       <span>{{localize "SL.Mastered"}} <input type="number" class="sl-small" data-item-field="system.mastered" value="{{system.mastered}}" min="-1" max="4"></span>
       <span class="sl-controls">
+        {{#if ../editable}}
+        <a data-action="raiseDiscipline" data-tooltip="{{localize 'SL.RaiseDiscipline'}}"><i class="fa-solid fa-circle-plus"></i></a>
+        <a data-action="masterDiscipline" data-tooltip="{{localize 'SL.MasterDiscipline'}}"><i class="fa-solid fa-medal"></i></a>
+        {{/if}}
         <a data-action="itemEdit"><i class="fa-solid fa-pen"></i></a>
         <a data-action="itemDelete"><i class="fa-solid fa-trash"></i></a>
       </span>

@@ -28,16 +28,18 @@ Rules for AI agents and contributors. The user guide is [README.md](README.md).
 |---|---|
 | `system.json` | Manifest: document types, `htmlFields`, token attributes |
 | `module/silent-legions.mjs` | Entry point: `init` hook, sheet registration, settings, the Compendium-sidebar button, hotbar macros |
-| `module/config.mjs` | `SL`: attributes, saves, class progression, XP table, skill names, wealth, helper formulas |
+| `module/config.mjs` | `SL`: attributes, saves, classes (progression, class skills, bonus skills), XP table, skill names, skill costs, starting wealth, attribute array, discipline costs, helper formulas |
 | `module/data/actors.mjs` | `CharacterData` and `NpcData` (schemas and derived values: saves, attack bonus, AC, encumbrance) |
 | `module/data/items.mjs` | One `TypeDataModel` per item type |
-| `module/documents.mjs` | `SLActor` (damage, Expertise, Madness, `learnSkill`), `SLItem.use()`, `SLCombatant` (initiative) |
+| `module/documents.mjs` | `SLActor` (damage, Expertise, Madness, 0 HP status, `learnSkill`, `buySkill`, discipline learn/raise/master, multiclass check), `SLItem.use()`, `SLCombatant` (initiative) |
 | `module/rolls.mjs` | All dice and chat cards, and the chat-button handlers |
 | `module/sheets.mjs` | Character, NPC, and item sheets |
 | `module/apps/import-app.mjs` | The "Import from PDF" dialog |
+| `module/apps/creation-app.mjs` | The "Create character" wizard |
+| `module/apps/skill-picks.mjs` | Starting skill picks (background, class bonus skills, free picks) and the "Bonus skills" dialog |
 | `module/import/pdf-extract.mjs` | pdf.js → page items with position, size, and font style |
 | `module/import/sl-parser.mjs` | Page items → book data ([docs/data-format.md](docs/data-format.md)) |
-| `module/import/foundry-import.mjs` | Book data → world compendiums |
+| `module/import/foundry-import.mjs` | Book data → world compendiums; `ensureSkillPack()` creates the names-only "SL: Skills" compendium in a world without an import |
 | `module/import/table-plan.mjs` | Master tables: which book tables roll together or branch to others, by table name ([docs/data-format.md](docs/data-format.md#table-plan)) |
 | `module/import/keeper-pack.mjs` | Book data → RPG Keeper content pack |
 | `tools/extract.mjs` | CLI: PDF → `output/silent-legions-data.json` and `output/keeper-sl-pack.json` |
@@ -45,6 +47,8 @@ Rules for AI agents and contributors. The user guide is [README.md](README.md).
 | `templates/`, `styles/`, `lang/en.json` | Handlebars templates, CSS, English strings |
 | `.github/workflows/release.yml` | "Release" workflow: tests, stamps version/manifest/download into `system.json`, zips the system, (re)creates the GitHub release |
 | `test/parser.test.mjs` | `node:test` suite. Book tests skip without the PDF |
+| `test/rules.test.mjs` | `node:test` checks of the rules numbers in `config.mjs` |
+| `docs/user-guide.md` | User guide: creation, skills, level up, sorcery, combat |
 
 ## Data flow of an import
 
@@ -74,6 +78,9 @@ Rules for AI agents and contributors. The user guide is [README.md](README.md).
   (Foundry merges JSON objects, and a duplicate key loses one of them).
 - Item fields shown inline on an actor sheet use `data-item-field="system.x"` (no `name`), so they
   update the item, not the actor.
+- A skill item at level -1 (`SL.untrained`) is an untrained row: rolls take -1 (combat -2). New
+  characters get one untrained row per skill in `SL.skills` (`SLActor._preCreate`). Use
+  `skill.system.trained`, not "the item exists", to test for a trained skill.
 - NPC attack rows use `name="attacks.N.field"`; `SLNpcSheet._processFormData` rebuilds the array.
 - Master tables refer to book tables by name. A renamed table shows up in `buildTablePlan().warnings`
   and fails the "every master table finds its sub-tables" test. Created RollTables are matched to

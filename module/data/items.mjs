@@ -21,10 +21,19 @@ class CarriedItemData extends BaseItemData {
   }
 }
 
-/** A skill such as "Combat/Projectile" at level 0 to 4. */
+/** A skill such as "Combat/Projectile" at level 0 to 4, or -1 for an untrained skill row. */
 export class SkillData extends BaseItemData {
   static defineSchema() {
-    return { ...super.defineSchema(), level: int(0, { min: 0, max: 4 }), attribute: attr("int") };
+    return { ...super.defineSchema(), level: int(0, { min: SL.untrained, max: 4 }), attribute: attr("int") };
+  }
+
+  get trained() {
+    return this.level > SL.untrained;
+  }
+
+  /** A specialized skill (Combat, Culture, …) without its "/Specialty" part: the untrained placeholder row. */
+  get needsSpecialty() {
+    return !!SL.skills[this.baseName]?.spec && !this.parent.name.includes("/");
   }
 
   /** "Combat/Projectile" → "Combat". */

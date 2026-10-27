@@ -3,10 +3,13 @@
 A minimal, unofficial Foundry VTT v13 system for **Silent Legions**, the Lovecraftian horror RPG by
 Kevin Crawford (Sine Nomine Publishing, 2015).
 
-The system has the rules mechanics only. It has no book text: no spells, items, creatures, or
-tables. You can type those in by hand, or import them from **your own copy of the PDF** with the
-"Import from PDF" menu. The same importer also writes a content pack for
+The system has the rules mechanics and the skill names only. It has no book text: no spells,
+items, creatures, or tables. You can type those in by hand, or import them from **your own copy
+of the PDF** with the "Import from PDF" menu. The same importer also writes a content pack for
 [RPG Keeper](../osr_keeper) (the osr_keeper app).
+
+The [user guide](docs/user-guide.md) explains character creation, skills, level up, sorcery,
+and combat step by step.
 
 ## What the system does
 
@@ -14,6 +17,22 @@ tables. You can type those in by hand, or import them from **your own copy of th
   classes (multiclass works), hit points, Expertise, Madness (0–100), XP, wealth, background.
   The sheet calculates the attack bonus, the five saving throws, AC against melee and against
   firearms, maximum Expertise, maximum skill level, and encumbrance (readied and stowed items).
+- **Character creation wizard** ("Create character" in the sheet header): roll 3d6 in order or
+  place the optional 14/11/7 array, pick a background (or roll one) and a class, raise a prime
+  attribute to 14, pick the starting wealth, and pick the background and class bonus skills.
+  The wizard checks the level-1 limit, rolls hit points, sets Expertise, and adds the background
+  and the level-1 class ability from the imported compendiums.
+- **Skills tab**: every new character lists all 26 skills (untrained skills are level -1 and roll
+  at -1). The skills show in columns, with filters for all, trained, and class skills.
+  **Bonus skills** adds a class's starting skills. The **+** button spends skill points at the
+  book cost (class skill: new level + 1, other: new level + 2) up to the maximum skill level.
+- **Sorcery**: drop a spell on a character to learn it (Int/Occult vs 6 + level, with Madness),
+  or a discipline (1 skill point, 5 Madness). Buttons raise a discipline and master its levels
+  (Expertise and Madness costs).
+- **Level up** checks the skills that a level in a new class needs. At 0 HP a character gets the
+  "Mortally wounded" status and an NPC the "Dead" status.
+- **SL: Skills** compendium: the system creates it in each world with the 26 skill names. The PDF
+  import replaces it with the described skills.
 - **NPCs and creatures** (actor type `npc`): a Silent Legions stat block. The save is
   15 − HD/2 (rounded up) unless you type a value. AC with `*` (needs magic to harm) blocks
   Slaughter hits.
@@ -72,7 +91,7 @@ The importer builds these world compendiums, in the compendium folder "Silent Le
 |---|---|
 | SL: Rules Reference | Journal: quick reference, Madness costs, deliria, the four classes, skills, backgrounds, weapons, armor, vehicles, disciplines |
 | SL: Class Abilities | 16 class abilities (Expertise cost 1) |
-| SL: Skills | 26 skills |
+| SL: Skills | 26 skills, with descriptions (replaces the built-in names-only compendium) |
 | SL: Backgrounds | 40 backgrounds. Drop one on a character to add its skills |
 | SL: Deliria | 12 sample deliria |
 | SL: Equipment | 21 weapons, 8 armors, 20 gear items, 9 vehicles |
@@ -169,12 +188,13 @@ public.
 ## Copyright
 
 Silent Legions is © 2015 Sine Nomine Publishing. This repository holds no text from the book.
-The class progression numbers, XP table, and skill names in `module/config.mjs` are game
-mechanics. Everything that the importer writes (compendiums, `output/`, downloads) is a copy of
+The class progression numbers, XP table, skill names, class bonus skills, and costs in
+`module/config.mjs` are game mechanics. Everything that the importer writes (compendiums, `output/`, downloads) is a copy of
 your book: keep it private. `.gitignore` excludes `*.pdf` and `output/`.
 
 ## Develop and test
 
+- [docs/user-guide.md](docs/user-guide.md): how to play with the system.
 - [AGENTS.md](AGENTS.md): code layout and rules for contributors and AI agents.
 - [docs/data-format.md](docs/data-format.md): the parsed data format.
 - [docs/parser.md](docs/parser.md): how the parser reads the PDF, and how to fix it for another printing.

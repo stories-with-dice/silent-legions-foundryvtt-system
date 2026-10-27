@@ -34,6 +34,9 @@
       </div>
     </div>
     <div class="sl-header-buttons">
+      {{#if showCreate}}
+      <button type="button" class="sl-primary" data-action="createCharacter"><i class="fa-solid fa-user-plus"></i> {{localize "SL.Create.title"}}</button>
+      {{/if}}
       <button type="button" data-action="roll" data-roll-type="initiative"><i class="fa-solid fa-bolt"></i> {{localize "SL.Initiative"}}</button>
       <button type="button" data-action="roll" data-roll-type="madness"><i class="fa-solid fa-brain"></i> {{localize "SL.GainMadness"}}</button>
       <button type="button" data-action="roll" data-roll-type="rest"><i class="fa-solid fa-bed"></i> {{localize "SL.Rest"}}</button>

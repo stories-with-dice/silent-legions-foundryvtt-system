@@ -21,27 +21,6 @@
         {{/each}}
       </div>
 
-      <h3 class="sl-section">{{localize "SL.Classes"}}</h3>
-      <div class="sl-classes">
-        {{#each classes}}
-        <label>{{localize label}} <input type="number" name="system.classLevels.{{key}}" value="{{level}}" min="0"></label>
-        {{/each}}
-      </div>
-      <div class="sl-row">
-        <label>{{localize "SL.WealthLabel"}}
-          <select name="system.wealth">{{selectOptions wealthOptions selected=source.wealth localize=true}}</select>
-        </label>
-        <label>{{localize "SL.SkillPoints"}} <input type="number" name="system.skillPoints" value="{{source.skillPoints}}"></label>
-      </div>
-      <div class="sl-row">
-        <label class="sl-wide">{{localize "SL.Background"}} <input type="text" name="system.background" value="{{source.background}}"></label>
-      </div>
-      <div class="sl-row">
-        <label class="sl-wide">{{localize "SL.Languages"}} <input type="text" name="system.languages" value="{{source.languages}}"></label>
-      </div>
-      <div class="sl-row">
-        <label class="sl-wide">{{localize "SL.Connection"}} <input type="text" name="system.connection" value="{{source.connection}}"></label>
-      </div>
       <details class="sl-adjust">
         <summary>{{localize "SL.Adjustments"}}</summary>
         <div class="sl-row">
@@ -61,31 +40,27 @@
     </div>
 
     <div>
-      <h3 class="sl-section">{{localize "SL.Skills"}} <span class="sl-hint">{{localize "SL.MaxSkill"}} {{system.maxSkillLevel}}</span></h3>
-      <ol class="sl-list">
-        {{#each skills}}
-        <li class="sl-item" data-item-id="{{id}}">
-          <a class="sl-item-name" data-action="roll" data-roll-type="skill" data-tooltip="{{localize 'SL.ShiftSkip'}}">
-            {{name}}{{#if classSkill}} <i class="fa-solid fa-star sl-class-skill" data-tooltip="{{localize 'SL.ClassSkill'}}"></i>{{/if}}
-          </a>
-          <span class="sl-hint">{{attribute}}</span>
-          <input type="number" class="sl-small" data-item-field="system.level" value="{{level}}" min="0" max="4">
-          <a data-action="itemEdit" data-tooltip="{{localize 'SL.Edit'}}"><i class="fa-solid fa-pen"></i></a>
-          <a data-action="itemDelete" data-tooltip="{{localize 'SL.Delete'}}"><i class="fa-solid fa-trash"></i></a>
-        </li>
-        {{else}}
-        <li class="sl-empty">{{localize "SL.NoSkills"}}</li>
+      <h3 class="sl-section">{{localize "SL.Classes"}}</h3>
+      <div class="sl-classes">
+        {{#each classes}}
+        <label>{{localize label}} <input type="number" name="system.classLevels.{{key}}" value="{{level}}" min="0"></label>
         {{/each}}
-      </ol>
-      {{#if editable}}
-      <div class="sl-row">
-        <select name="learn-skill">
-          {{#each missingSkills}}<option value="{{this}}">{{this}}</option>{{/each}}
-        </select>
-        <button type="button" data-action="learnSkill"><i class="fa-solid fa-plus"></i> {{localize "SL.AddSkill"}}</button>
       </div>
-      {{/if}}
-      <p class="sl-hint">{{localize "SL.UntrainedHint"}}</p>
+      <div class="sl-row">
+        <label>{{localize "SL.WealthLabel"}}
+          <select name="system.wealth">{{selectOptions wealthOptions selected=source.wealth localize=true}}</select>
+        </label>
+      </div>
+      <div class="sl-row">
+        <label class="sl-wide">{{localize "SL.Background"}} <input type="text" name="system.background" value="{{source.background}}"></label>
+      </div>
+      <div class="sl-row">
+        <label class="sl-wide">{{localize "SL.Languages"}} <input type="text" name="system.languages" value="{{source.languages}}"></label>
+      </div>
+      <div class="sl-row">
+        <label class="sl-wide">{{localize "SL.Connection"}} <input type="text" name="system.connection" value="{{source.connection}}"></label>
+      </div>
+      <p class="sl-hint">{{localize "SL.SaveHint"}}</p>
     </div>
   </div>
 </section>

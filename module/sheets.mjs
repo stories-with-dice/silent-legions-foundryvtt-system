@@ -1,6 +1,9 @@
 import { SL } from "./config.mjs";
 import * as Rolls from "./rolls.mjs";
 import { NpcData } from "./data/actors.mjs";
+import { askSpecialty } from "./documents.mjs";
+import { SLCreationApp } from "./apps/creation-app.mjs";
+import { bonusSkillsDialog } from "./apps/skill-picks.mjs";
 
 const { HandlebarsApplicationMixin } = foundry.applications.api;
 const { ActorSheetV2, ItemSheetV2 } = foundry.applications.sheets;
@@ -129,13 +132,26 @@ export class SLCharacterSheet extends SLActorSheet {
   static DEFAULT_OPTIONS = {
     classes: ["character"],
     position: { width: 760, height: 780 },
-    actions: { learnSkill: SLCharacterSheet.#onLearnSkill }
+    actions: {
+      learnSkill: SLCharacterSheet.#onLearnSkill,
+      buySkill: SLCharacterSheet.#onBuySkill,
+      skillFilter: SLCharacterSheet.#onSkillFilter,
+      bonusSkills: SLCharacterSheet.#onBonusSkills,
+      createCharacter: SLCharacterSheet.#onCreateCharacter,
+      raiseDiscipline: SLCharacterSheet.#onRaiseDiscipline,
+      masterDiscipline: SLCharacterSheet.#onMasterDiscipline
+    }
   };
+
+  /** Skill list filter: all skills, trained skills only, or class skills only. Kept while the sheet is open. */
+  static SKILL_FILTERS = { all: "SL.Filter.all", trained: "SL.Filter.trained", class: "SL.Filter.class" };
+  #skillFilter = "all";
 
   static PARTS = {
     header: { template: `${PATH}/actor/character-header.hbs` },
     tabs: { template: "templates/generic/tab-navigation.hbs" },
     main: { template: `${PATH}/actor/character-main.hbs`, scrollable: [""] },
+    skills: { template: `${PATH}/actor/character-skills.hbs`, scrollable: [""] },
     equipment: { template: `${PATH}/actor/character-equipment.hbs`, scrollable: [""] },
     sorcery: { template: `${PATH}/actor/character-sorcery.hbs`, scrollable: [""] },
     features: { template: `${PATH}/actor/character-features.hbs`, scrollable: [""] },
@@ -144,7 +160,7 @@ export class SLCharacterSheet extends SLActorSheet {
 
   static TABS = {
     primary: {
-      tabs: [{ id: "main" }, { id: "equipment" }, { id: "sorcery" }, { id: "features" }, { id: "bio" }],
+      tabs: [{ id: "main" }, { id: "skills" }, { id: "equipment" }, { id: "sorcery" }, { id: "features" }, { id: "bio" }],
       initial: "main",
       labelPrefix: "SL.Tab"
     }
@@ -161,16 +177,25 @@ export class SLCharacterSheet extends SLActorSheet {
     }));
     context.classes = Object.entries(SL.classes).map(([key, c]) => ({ key, label: c.label, level: s.classLevels[key] }));
     context.saves = Object.entries(s.saves).map(([key, v]) => ({ key, target: v.target, label: SL.saves[key] }));
-    context.skills = byType("skill").map(i => ({
-      item: i, id: i.id, name: i.name, level: i.system.level, attribute: SL.attributes[i.system.attribute]?.abbr,
-      classSkill: i.system.isClassSkill, total: i.system.level + (s.attributes[i.system.attribute]?.mod ?? 0)
-    })).sort((a, b) => a.name.localeCompare(b.name));
+    context.skills = byType("skill").map(i => {
+      const next = i.system.level + 1;
+      const cost = SL.skillCost(next, i.system.isClassSkill);
+      return {
+        item: i, id: i.id, name: i.name, level: i.system.level, trained: i.system.trained, attribute: SL.attributes[i.system.attribute]?.abbr,
+        classSkill: i.system.isClassSkill,
+        buyTooltip: next > s.maxSkillLevel ? game.i18n.format("SL.BuyMax", { max: s.maxSkillLevel })
+          : game.i18n.format(i.system.needsSpecialty ? "SL.BuySpecialty" : "SL.Buy", { level: next, cost })
+      };
+    }).sort((a, b) => a.name.localeCompare(b.name));
+    context.skillFilter = this.#skillFilter;
+    context.skillFilters = Object.entries(SLCharacterSheet.SKILL_FILTERS).map(([key, label]) => ({ key, label, active: key === this.#skillFilter }));
     const known = new Set(byType("skill").map(i => i.system.baseName));
     context.missingSkills = Object.keys(SL.skills).filter(n => !known.has(n) || SL.skills[n].spec);
+    context.showCreate = this.isEditable && !s.hasClass;
     context.weapons = byType("weapon").map(w => {
       const { mod } = w.system.attributeMod(this.actor);
       const skill = this.actor.findSkill(w.system.skill);
-      const toHit = s.attackBonus + (skill ? skill.system.level : -2) + mod;
+      const toHit = s.attackBonus + (skill?.system.trained ? skill.system.level : -2) + mod;
       return { item: w, id: w.id, toHit, damage: `${w.system.damage}${mod ? (mod > 0 ? `+${mod}` : mod) : ""}` };
     });
     context.armor = byType("armor");
@@ -198,32 +223,103 @@ export class SLCharacterSheet extends SLActorSheet {
     return context;
   }
 
+  /** "Add" under the skill list: a free skill at level-0 (no skill point cost; for the GM or a new character). */
   static async #onLearnSkill(event, target) {
     const select = this.element.querySelector("select[name='learn-skill']");
     const name = select?.value;
     if (!name) return;
-    const spec = SL.skills[name]?.spec;
-    let full = name;
-    if (spec) {
-      const form = await foundry.applications.api.DialogV2.input({
-        window: { title: game.i18n.localize("SL.Specialization") },
-        content: `<div class="form-group"><label>${name}/</label><input type="text" name="spec" autofocus></div>`
-      }).catch(() => null);
-      if (!form?.spec) return;
-      full = `${name}/${form.spec}`;
-    }
-    await this.actor.learnSkill(full);
+    const full = SL.skills[name]?.spec ? await askSpecialty(name) : name;
+    if (full) await this.actor.learnSkill(full);
   }
 
-  /** Dropping a background sets it and adds its skills (level-0, or level-1 if already known). */
+  static #onBuySkill(event, target) {
+    const item = this.actor.items.get(target.closest("[data-item-id]")?.dataset.itemId);
+    if (item) return this.actor.buySkill(item);
+  }
+
+  /** Show all skills, trained skills, or class skills. CSS hides the other rows, so there is no re-render. */
+  static #onSkillFilter(event, target) {
+    this.#skillFilter = target.dataset.filter;
+    this.element.querySelector(".sl-skill-grid")?.setAttribute("data-filter", this.#skillFilter);
+    for (const b of this.element.querySelectorAll("[data-action='skillFilter']")) {
+      const active = b.dataset.filter === this.#skillFilter;
+      b.classList.toggle("active", active);
+      b.setAttribute("aria-pressed", String(active));
+    }
+  }
+
+  static #onBonusSkills() {
+    return bonusSkillsDialog(this.actor);
+  }
+
+  static #onCreateCharacter() {
+    return new SLCreationApp(this.actor).render(true);
+  }
+
+  static #onRaiseDiscipline(event, target) {
+    const item = this.actor.items.get(target.closest("[data-item-id]")?.dataset.itemId);
+    if (item) return this.actor.raiseDiscipline(item);
+  }
+
+  static #onMasterDiscipline(event, target) {
+    const item = this.actor.items.get(target.closest("[data-item-id]")?.dataset.itemId);
+    if (item) return this.actor.masterDiscipline(item);
+  }
+
+  /**
+   * Drops from outside the sheet:
+   * - background: set it and add its skills (level-0, or level-1 if already known);
+   * - skill: a skill the character already lists gets the dropped description, no duplicate;
+   * - discipline: learn it (1 skill point, 5 Madness) or add it for free (innate, at creation);
+   * - spell: roll to learn it (Int/Occult) or add it without a roll.
+   */
   async _onDropItem(event, item) {
-    if (item.type !== "background" || !this.actor.isOwner) return super._onDropItem(event, item);
-    await this.actor.update({ "system.background": item.name });
-    const learnable = item.system.skillList.filter(n => !/^any /i.test(n) && !/\/any$/i.test(n));
-    for (const name of learnable) await this.actor.learnSkill(name);
-    const rest = item.system.skillList.filter(n => !learnable.includes(n));
-    if (rest.length) ui.notifications.info(game.i18n.format("SL.BackgroundChoose", { skills: rest.join(", ") }));
-    return item;
+    const actor = this.actor;
+    if (!actor.isOwner || item.parent === actor) return super._onDropItem(event, item);
+    switch (item.type) {
+      case "background": {
+        await actor.update({ "system.background": item.name });
+        const list = item.system.skillList.map(SL.skillName);
+        const open = n => SL.anySkillPicks(n) || /^any /i.test(n) || /\/any$/i.test(n) || (SL.skills[n]?.spec && !n.includes("/"));
+        for (const name of list.filter(n => !open(n))) await actor.learnSkill(name);
+        const rest = list.filter(open);
+        if (rest.length) ui.notifications.info(game.i18n.format("SL.BackgroundChoose", { skills: rest.join(", ") }));
+        return item;
+      }
+      case "skill": {
+        const existing = actor.skillNamed(item.name);
+        if (!existing) return super._onDropItem(event, item);
+        if (!existing.system.description && item.system.description) await existing.update({ "system.description": item.system.description });
+        ui.notifications.info(game.i18n.format("SL.SkillExists", { name: item.name }));
+        return existing;
+      }
+      case "discipline": {
+        const choice = await SLCharacterSheet.#chooseLearn(item, "SL.LearnDisciplineHint", "SL.LearnDiscipline", "SL.AddInnate");
+        if (choice === "learn") return actor.learnDiscipline(item.toObject());
+        if (choice === "free") return actor.learnDiscipline(item.toObject(), { free: true });
+        return null;
+      }
+      case "spell": {
+        const choice = await SLCharacterSheet.#chooseLearn(item, "SL.LearnSpellDropHint", "SL.LearnSpell", "SL.AddKnown");
+        if (choice === "learn") return Rolls.learnSpell(actor, item.toObject());
+        if (choice === "free") return super._onDropItem(event, item);
+        return null;
+      }
+    }
+    return super._onDropItem(event, item);
+  }
+
+  /** Ask how to add a dropped spell or discipline: "learn" (with its cost), "free", or null. */
+  static #chooseLearn(item, hintKey, learnKey, freeKey) {
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: item.name },
+      content: `<p>${game.i18n.format(hintKey, { level: item.system.level ?? 0 })}</p>`,
+      buttons: [
+        { action: "learn", label: game.i18n.localize(learnKey), icon: "fa-solid fa-book-skull", default: true },
+        { action: "free", label: game.i18n.localize(freeKey), icon: "fa-solid fa-plus" }
+      ],
+      rejectClose: false
+    }).catch(() => null);
   }
 }
 

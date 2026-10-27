@@ -1,6 +1,33 @@
 import { SL } from "./config.mjs";
 import * as Rolls from "./rolls.mjs";
 
+const t = (key, data) => (data ? game.i18n.format(key, data) : game.i18n.localize(key));
+const esc = v => foundry.utils.escapeHTML(String(v ?? ""));
+
+/** Status effect ids for 0 HP: characters are mortally wounded, NPCs are dead. */
+export const STATUS = { mortal: "sl-mortal", dead: "dead" };
+
+/** Skill item data. New characters get every book skill at the untrained level. */
+export const skillData = (name, level = 0) => ({
+  name, type: "skill", img: "icons/svg/book.svg",
+  system: { level, attribute: SL.skills[name.split("/")[0].trim()]?.attr ?? "int" }
+});
+
+/** Ask for the specialty of a specialized skill. Returns "Base/Specialty", or null. */
+export async function askSpecialty(base) {
+  const form = await foundry.applications.api.DialogV2.input({
+    window: { title: t("SL.Specialization") },
+    content: `<div class="form-group"><label>${esc(base)}/</label><input type="text" name="spec" autofocus></div>`,
+    rejectClose: false
+  }).catch(() => null);
+  const spec = form?.spec?.trim();
+  return spec ? `${base}/${spec}` : null;
+}
+
+async function confirm(title, html) {
+  return foundry.applications.api.DialogV2.confirm({ window: { title }, content: html, rejectClose: false }).catch(() => false);
+}
+
 export class SLActor extends Actor {
   /** @inheritDoc */
   getRollData() {
@@ -21,6 +48,19 @@ export class SLActor extends Actor {
     const prototypeToken = { actorLink: this.type === "character", disposition: this.type === "character" ? 1 : -1 };
     if (this.type === "character") prototypeToken.sight = { enabled: true };
     this.updateSource({ prototypeToken });
+    // A new character lists every skill, untrained, so the sheet can roll any of them.
+    if (this.type === "character" && !(data.items ?? []).some(i => i.type === "skill")) {
+      this.updateSource({ items: [...(data.items ?? []), ...Object.keys(SL.skills).map(n => skillData(n, SL.untrained))] });
+    }
+  }
+
+  /** At 0 HP a character gets the "mortally wounded" status and an NPC the "dead" status; healing removes it. */
+  _onUpdate(changed, options, userId) {
+    super._onUpdate(changed, options, userId);
+    if (userId !== game.user.id || foundry.utils.getProperty(changed, "system.hp.value") === undefined) return;
+    const id = this.type === "character" ? STATUS.mortal : STATUS.dead;
+    const down = this.system.hp.value <= 0;
+    if (down !== this.statuses.has(id)) this.toggleStatusEffect(id, { active: down, overlay: this.type !== "character" });
   }
 
   /** Lower current HP (never below 0) and post a short note. */
@@ -65,17 +105,127 @@ export class SLActor extends Actor {
       ?? null;
   }
 
-  /** Add a skill at level-0, or raise it to level-1 if the character already has it at level-0. */
+  /** Skill item with exactly this name (case-insensitive), or undefined. */
+  skillNamed(name) {
+    const lname = String(name).toLowerCase();
+    return this.items.find(i => i.type === "skill" && i.name.toLowerCase() === lname);
+  }
+
+  /**
+   * Free skill pick (background, class bonus skill): an untrained or new skill becomes level-0,
+   * a level-0 skill becomes level-1. A skill at level-1 or higher does not change (a new
+   * character's skills start at level-1 or lower).
+   */
   async learnSkill(name) {
-    const existing = this.items.find(i => i.type === "skill" && i.name.toLowerCase() === name.toLowerCase());
+    const existing = this.skillNamed(name);
     if (existing) {
-      if (existing.system.level === 0) await existing.update({ "system.level": 1 });
+      if (existing.system.level < SL.startingSkillMax) await existing.update({ "system.level": existing.system.level + 1 });
       return existing;
     }
-    const base = name.split("/")[0].trim();
-    const attribute = SL.skills[base]?.attr ?? "int";
-    const [item] = await this.createEmbeddedDocuments("Item", [{ name, type: "skill", system: { level: 0, attribute } }]);
+    const [item] = await this.createEmbeddedDocuments("Item", [skillData(name)]);
     return item;
+  }
+
+  /**
+   * Spend skill points to raise a skill one level: class skill (new level + 1 points),
+   * other skill (new level + 2). The new level must not be above the maximum skill level.
+   * An untrained specialized row ("Combat") asks for the specialty and raises "Combat/…".
+   */
+  async buySkill(skill) {
+    let name = skill.name;
+    if (skill.system.needsSpecialty) {
+      name = await askSpecialty(skill.system.baseName);
+      if (!name) return null;
+    }
+    const target = name === skill.name ? skill : this.skillNamed(name);
+    const from = target?.system.level ?? SL.untrained;
+    const level = from + 1;
+    const base = name.split("/")[0].trim();
+    const classSkill = this.system.classSkills.has(base);
+    const cost = SL.skillCost(level, classSkill);
+    const { maxSkillLevel, skillPoints } = this.system;
+    if (level > maxSkillLevel) return ui.notifications.warn(t("SL.Warn.skillMax", { name, level, max: maxSkillLevel }));
+    if (skillPoints < cost) return ui.notifications.warn(t("SL.Warn.skillPoints", { name, cost, points: skillPoints }));
+    if (target) await target.update({ "system.level": level });
+    else await this.createEmbeddedDocuments("Item", [skillData(name, level)]);
+    await this.update({ "system.skillPoints": skillPoints - cost });
+    return Rolls.postCard(this, {
+      title: t("SL.SkillRaised"), subtitle: name,
+      body: `<p>${esc(name)}: ${from < 0 ? t("SL.UntrainedShort") : from} → <strong>${level}</strong> · ${t("SL.SkillPointsSpent", { n: cost, left: skillPoints - cost })}</p>`,
+      flags: { type: "skillBuy" }
+    });
+  }
+
+  /**
+   * Learn a discipline: 1 skill point (it can go below 0: "spend ahead" from the next level)
+   * and 5 Madness. With `free`, add it at level-0 with no cost (an innate discipline at creation).
+   */
+  async learnDiscipline(data, { free = false } = {}) {
+    const itemData = foundry.utils.deepClone(data);
+    itemData.system = { ...itemData.system, level: 0, mastered: -1 };
+    delete itemData._id;
+    const [item] = await this.createEmbeddedDocuments("Item", [itemData]);
+    if (free) return item;
+    const { learnPoints, learnMadness } = SL.discipline;
+    const points = this.system.skillPoints;
+    await this.update({ "system.skillPoints": points - learnPoints });
+    await this.addMadness(learnMadness);
+    await Rolls.postCard(this, {
+      title: t("SL.DisciplineLearned"), subtitle: item.name, img: item.img,
+      body: `<p>${t("SL.SkillPointsSpent", { n: learnPoints, left: points - learnPoints })} · +${learnMadness} ${t("SL.Madness")}</p>`,
+      flags: { type: "disciplineLearn", itemId: item.id }
+    });
+    return item;
+  }
+
+  /** Raise a discipline one level, at the cost of a class skill. */
+  async raiseDiscipline(disc) {
+    const level = disc.system.level + 1;
+    const { maxSkillLevel, skillPoints } = this.system;
+    const cost = SL.skillCost(level, true);
+    if (level > 4 || level > maxSkillLevel) return ui.notifications.warn(t("SL.Warn.skillMax", { name: disc.name, level, max: maxSkillLevel }));
+    if (skillPoints < cost) return ui.notifications.warn(t("SL.Warn.skillPoints", { name: disc.name, cost, points: skillPoints }));
+    await disc.update({ "system.level": level });
+    await this.update({ "system.skillPoints": skillPoints - cost });
+    return Rolls.postCard(this, {
+      title: t("SL.SkillRaised"), subtitle: disc.name, img: disc.img,
+      body: `<p>${esc(disc.name)}: ${level - 1} → <strong>${level}</strong> · ${t("SL.SkillPointsSpent", { n: cost, left: skillPoints - cost })}</p>`,
+      flags: { type: "skillBuy" }
+    });
+  }
+
+  /**
+   * Master the next level of a discipline (a mastered level costs nothing to use).
+   * Level-0: lose 1 Expertise for good and gain 10 Madness. Each later level: 5 Madness.
+   */
+  async masterDiscipline(disc) {
+    const level = disc.system.mastered + 1;
+    if (level > disc.system.level) return ui.notifications.warn(t("SL.Warn.masterKnown", { name: disc.name }));
+    const madness = SL.discipline.masterMadness(level);
+    const expertise = SL.discipline.masterExpertise(level);
+    const cost = expertise ? t("SL.MasterCostExpertise", { madness, expertise }) : t("SL.MasterCost", { madness });
+    if (!(await confirm(`${this.name}: ${disc.name}`, `<p>${t("SL.MasterConfirm", { level, cost })}</p>`))) return null;
+    await disc.update({ "system.mastered": level });
+    if (expertise) {
+      const exp = this.system.expertise;
+      await this.update({ "system.expertise.lost": exp.lost + expertise, "system.expertise.value": Math.max(0, exp.value - expertise) });
+    }
+    await this.addMadness(madness);
+    return Rolls.postCard(this, {
+      title: t("SL.DisciplineMastered"), subtitle: `${disc.name} · ${t("SL.Level")} ${level}`, img: disc.img,
+      body: `<p>${esc(cost)}</p>`, flags: { type: "disciplineMaster", itemId: disc.id }
+    });
+  }
+
+  /**
+   * The bonus skills that a level in a new class needs (the first two picks of the class's
+   * bonus skills, at level-0 or better). Returns the missing ones as text, for example
+   * ["History or Science"].
+   */
+  missingClassPrerequisites(cls) {
+    return SL.classes[cls].bonusSkills
+      .filter(group => !group.some(name => this.items.some(i => i.type === "skill" && i.system.baseName === name && i.system.trained)))
+      .map(group => group.join(` ${t("SL.Or")} `));
   }
 }
 

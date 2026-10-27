@@ -7,19 +7,24 @@ import * as ItemModels from "./data/items.mjs";
 import { SLActor, SLItem, SLCombatant, SLTableResult } from "./documents.mjs";
 import { SLCharacterSheet, SLNpcSheet, SLItemSheet, defaultItemIcon } from "./sheets.mjs";
 import { SLImportApp } from "./apps/import-app.mjs";
+import { SLCreationApp } from "./apps/creation-app.mjs";
+import { STATUS } from "./documents.mjs";
+import { ensureSkillPack } from "./import/foundry-import.mjs";
 import * as Rolls from "./rolls.mjs";
 
 const SYSTEM = "silent-legions";
 
 Hooks.once("init", () => {
   CONFIG.SL = SL;
-  game.silentLegions = { config: SL, rolls: Rolls, ImportApp: SLImportApp };
+  game.silentLegions = { config: SL, rolls: Rolls, ImportApp: SLImportApp, CreationApp: SLCreationApp };
 
   CONFIG.Actor.documentClass = SLActor;
   CONFIG.Item.documentClass = SLItem;
   CONFIG.Combatant.documentClass = SLCombatant;
   CONFIG.TableResult.documentClass = SLTableResult;
   CONFIG.Combat.initiative = { formula: "1d8", decimals: 0 };
+  // A character at 0 HP: dies in 6 rounds unless stabilized.
+  CONFIG.statusEffects.push({ id: STATUS.mortal, name: "SL.Status.mortal", img: "icons/svg/blood.svg" });
 
   CONFIG.Actor.dataModels = { character: CharacterData, npc: NpcData };
   CONFIG.Item.dataModels = {
@@ -50,6 +55,8 @@ Hooks.once("init", () => {
     restricted: false
   });
 });
+
+Hooks.once("ready", () => ensureSkillPack().catch(err => console.error("Silent Legions | skill compendium", err)));
 
 /** New items get a type icon instead of the generic bag. */
 Hooks.on("preCreateItem", (item, data) => {

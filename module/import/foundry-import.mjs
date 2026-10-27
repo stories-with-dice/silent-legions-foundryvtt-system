@@ -348,6 +348,19 @@ export async function importBook(data, { only = Object.keys(PACKS), pdfPath = nu
   onProgress(game.i18n.localize("SL.Import.done"));
 }
 
+/**
+ * The skill names are rules, not book text, so a world without an import still gets an
+ * "SL: Skills" compendium: one item per skill (name and attribute, no description).
+ * A PDF import replaces it with the described skills. Runs on "ready" for the first GM.
+ */
+export async function ensureSkillPack() {
+  if (!game.user.isGM || game.user !== game.users.activeGM || game.packs.get(`world.${packName("skills")}`)) return;
+  const pack = await freshPack("skills", await compendiumFolder());
+  await fill(pack, { "": Object.entries(SL.skills).map(([name, s]) => ({
+    name, type: "skill", img: defaultItemIcon("skill"), system: { level: 0, attribute: s.attr, source: "Silent Legions" }
+  })) });
+}
+
 /** Upload the PDF into the world folder so a journal page can show it. Returns the path. */
 export async function uploadPdf(file) {
   const FP = foundry.applications.apps.FilePicker.implementation;

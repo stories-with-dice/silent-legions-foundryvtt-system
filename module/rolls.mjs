@@ -46,10 +46,10 @@ const selectInput = (name, options, selected) => `<select name="${name}">${Objec
 const attributeOptions = () => Object.fromEntries(Object.entries(SL.attributes).map(([k, v]) => [k, v.label]));
 const difficultyOptions = () => ({ "": "SL.Diff.none", ...SL.difficulties });
 
-/** Render a chat card and post it with its rolls. */
-export async function postCard(actor, { title, subtitle = "", img = null, rolls = [], body = "", buttons = [], flags = {} }) {
+/** Render a chat card and post it with its rolls (`renderRolls: false` keeps the rolls out of the card text). */
+export async function postCard(actor, { title, subtitle = "", img = null, rolls = [], body = "", buttons = [], flags = {}, renderRolls = true }) {
   const rollHtml = [];
-  for (const r of rolls) rollHtml.push(await r.render());
+  if (renderRolls) for (const r of rolls) rollHtml.push(await r.render());
   const content = `
     <div class="sl-card">
       <header class="sl-card-header">
@@ -113,7 +113,7 @@ export async function skillCheck(actor, options = {}) {
   const parts = ["2d6"];
   const data = {};
   if (isPC) {
-    data.skill = skill ? skill.system.level : -1;
+    data.skill = skill?.system.trained ? skill.system.level : SL.untrained;
     data.attr = actor.system.attributes[attribute]?.mod ?? 0;
     parts.push("@skill", "@attr");
   } else {
@@ -126,7 +126,7 @@ export async function skillCheck(actor, options = {}) {
   const success = difficulty == null ? null : roll.total >= difficulty;
   const attrLabel = isPC ? `${SL.attributes[attribute]?.abbr}/` : "";
   const subtitle = [
-    isPC && !skill ? t("SL.Untrained") : "",
+    isPC && !skill?.system.trained ? t("SL.Untrained") : "",
     difficulty != null ? `${t("SL.Difficulty")} ${difficulty}` : "",
     isReroll ? t("SL.Rerolled") : ""
   ].filter(Boolean).join(" · ");
@@ -183,8 +183,9 @@ function attackProfile(actor, { weapon = null, attackIndex = null }) {
     const s = weapon.system;
     const { key: attr, mod: attrMod } = s.attributeMod(actor);
     const skill = actor.type === "character" ? actor.findSkill(s.skill) : null;
-    const skillLevel = actor.type === "character" ? (skill ? skill.system.level : -2) : 0;
-    const unarmedLevel = s.unarmed ? (skill ? skill.system.level : -1) : null;
+    const trained = skill?.system.trained;
+    const skillLevel = actor.type === "character" ? (trained ? skill.system.level : -2) : 0;
+    const unarmedLevel = s.unarmed ? (trained ? skill.system.level : -1) : null;
     return {
       name: weapon.name, img: weapon.img, count: 1,
       bonus: (actor.type === "character" ? actor.system.attackBonus : 0) + Math.max(skillLevel, -2) + attrMod,
@@ -383,6 +384,43 @@ export async function castSpell(actor, spell) {
   return postCard(actor, { title: spell.name, subtitle: `${t("SL.SpellLevel")} ${level}`, img: spell.img, rolls, body, buttons, flags: { type: "spell", itemId: spell.id } });
 }
 
+/**
+ * Learn a spell from a book or a teacher: needs Occult at level-0 or better. Int/Occult vs
+ * 6 + spell level (a teacher adds their Occult level). Any attempt costs 1 Madness; a success
+ * costs Madness equal to the spell level more and adds the spell to the character.
+ * @param {Actor} actor
+ * @param {object} spellData  Item data of the spell (from a drop).
+ */
+export async function learnSpell(actor, spellData) {
+  const level = spellData.system?.level ?? 1;
+  const occult = actor.findSkill("Occult");
+  if (!occult?.system.trained) return ui.notifications.warn(t("SL.Warn.needOccult", { name: actor.name }));
+  const dc = SL.spellLearnDifficulty(level);
+  const form = await ask(`${actor.name}: ${t("SL.LearnSpell")} (${spellData.name})`, [
+    `<p>${t("SL.LearnSpellHint", { dc, level })}</p>`,
+    field(t("SL.TeacherOccult"), numberInput("teacher", 0)),
+    field(t("SL.Modifier"), numberInput("modifier", 0))
+  ].join(""));
+  if (!form) return null;
+  const data = { skill: occult.system.level, attr: actor.system.attributes.int.mod, teacher: Number(form.teacher) || 0, mod: Number(form.modifier) || 0 };
+  const roll = await new Roll("2d6 + @skill + @attr + @teacher + @mod", data).evaluate();
+  const ok = roll.total >= dc;
+  const madness = 1 + (ok ? level : 0);
+  const after = await actor.addMadness(madness);
+  let item = null;
+  if (ok) {
+    const itemData = foundry.utils.deepClone(spellData);
+    delete itemData._id;
+    [item] = await actor.createEmbeddedDocuments("Item", [itemData]);
+  }
+  return postCard(actor, {
+    title: t("SL.LearnSpell"), subtitle: `${spellData.name} · ${t("SL.SpellLevel")} ${level} · ${t("SL.Difficulty")} ${dc}`,
+    img: spellData.img, rolls: [roll],
+    body: `${outcome(ok)}<p>${t(ok ? "SL.SpellLearned" : "SL.SpellNotLearned")} +${madness} ${t("SL.Madness")} → <strong>${after}</strong></p>`,
+    flags: { type: "spellLearn", itemId: item?.id ?? null }
+  });
+}
+
 /** Use a discipline: free up to the mastered level, else 1 Expertise or Madness = discipline level + 1. */
 export async function useDiscipline(actor, disc) {
   const s = disc.system;
@@ -443,6 +481,18 @@ export async function levelUp(actor) {
   const current = Object.entries(s.classLevels).sort((a, b) => b[1] - a[1])[0][0];
   const form = await ask(`${actor.name}: ${t("SL.LevelUp")}`, field(t("SL.ClassLabel"), selectInput("cls", options, current)));
   if (!form) return null;
+  // A level in a new class needs the first two bonus skills of that class at level-0.
+  if (s.hasClass && s.classLevels[form.cls] === 0) {
+    const missing = actor.missingClassPrerequisites(form.cls);
+    if (missing.length) {
+      const ok = await foundry.applications.api.DialogV2.confirm({
+        window: { title: `${actor.name}: ${t("SL.LevelUp")}` },
+        content: `<p>${t("SL.MulticlassMissing", { cls: t(SL.classes[form.cls].label), skills: missing.map(esc).join(", ") })}</p>`,
+        rejectClose: false
+      }).catch(() => false);
+      if (!ok) return null;
+    }
+  }
   const levels = { ...s.classLevels, [form.cls]: s.classLevels[form.cls] + 1 };
   const total = Object.values(levels).reduce((a, b) => a + b, 0);
   // Levels past 10th roll no new hit dice.

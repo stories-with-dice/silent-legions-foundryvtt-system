@@ -21,7 +21,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       expertise: new fields.SchemaField({ value: int(2, { min: 0 }), lost: int(0, { min: 0 }) }),
       madness: new fields.SchemaField({ value: int(0, { min: 0, max: 100 }), max: int(100) }),
       xp: int(0, { min: 0 }),
-      skillPoints: int(0, { min: 0 }),
+      // Below 0 when a discipline was learned by "spending ahead" from the next level.
+      skillPoints: int(0),
       wealth: new fields.StringField({ required: true, initial: "average", choices: () => SL.wealth }),
       background: str(),
       connection: str(),

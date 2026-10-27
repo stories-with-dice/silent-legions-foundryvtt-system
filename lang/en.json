@@ -41,13 +41,13 @@
       "tough": "Tough"
     },
     "Diff": {
-      "none": "—",
       "6": "6 (trained can usually do it)",
       "8": "8 (challenges a trained person)",
       "9": "9 (needs an expert)",
       "11": "11 (only an expert has a chance)",
       "13": "13 (limit of a master)",
-      "15": "15 (barely possible)"
+      "15": "15 (barely possible)",
+      "none": "—"
     },
     "Wealth": {
       "penniless": "Penniless",
@@ -77,6 +77,7 @@
     },
     "Tab": {
       "main": "Main",
+      "skills": "Skills",
       "equipment": "Equipment",
       "sorcery": "Sorcery",
       "features": "Abilities",
@@ -112,7 +113,12 @@
       "noTokens": "Select or target the tokens to damage.",
       "notOwner": "You do not own this actor.",
       "gmOnly": "Only a GM can write the world compendiums.",
-      "macroOwned": "Drag an item from a character sheet to make a roll macro."
+      "macroOwned": "Drag an item from a character sheet to make a roll macro.",
+      "skillMax": "{name}: level {level} is above the maximum skill level ({max}) for this character level.",
+      "skillPoints": "{name} needs {cost} skill points ({points} left).",
+      "masterKnown": "Raise {name} first: you can master only levels you know.",
+      "needOccult": "{name} needs Occult at level-0 or better to learn a spell.",
+      "noClass": "Set a class first (Create character, or a class level on the Main tab)."
     },
     "Import": {
       "title": "Import from PDF",
@@ -272,7 +278,7 @@
     "ToHit": "to hit",
     "Unarmed": "Unarmed (skill adds to damage and sets the Slaughter die)",
     "Untrained": "untrained (-1)",
-    "UntrainedHint": "Click a save to roll it. Untrained skill checks take -1: add the skill at level 0 only if the character has it.",
+    "UntrainedHint": "Untrained skills (level -1) roll at -1. The + button spends skill points: a class skill costs the new level + 1, another skill the new level + 2.",
     "Use": "Use",
     "UseAbility": "Use (spend Expertise)",
     "Vehicles": "Vehicles",
@@ -282,6 +288,82 @@
     "Worn": "Worn",
     "XP": "XP",
     "Generators": "Generators",
-    "GeneratorSteps": "Generator Steps"
+    "GeneratorSteps": "Generator Steps",
+    "Status": {
+      "mortal": "Mortally wounded"
+    },
+    "Filter": {
+      "all": "All",
+      "trained": "Trained",
+      "class": "Class skills"
+    },
+    "Picks": {
+      "background": "Background skill",
+      "classSkill": "Any one {cls} skill",
+      "anySkill": "Any one skill",
+      "wealth": "Struggling: bonus skill",
+      "specialty": "Specialty, for example Projectile",
+      "missing": "Pick a skill for \"{label}\".",
+      "needSpecialty": "{name} needs a specialty.",
+      "tooHigh": "{name} would start above level-1: pick another skill.",
+      "add": "Add skills",
+      "hint": "Each pick raises an untrained skill to level-0, or a level-0 skill to level-1. A new character's skills start at level-1 or lower."
+    },
+    "Create": {
+      "title": "Create character",
+      "methodRoll": "Roll 3d6 in order",
+      "methodArray": "Place 14, 11, or 7 (optional rule)",
+      "rollAttributes": "Roll attributes",
+      "arrayHint": "Each attribute is 14, 11, or 7, with no more 14s than 7s.",
+      "rollHint": "Roll, or type the scores of your own dice.",
+      "canReroll": "The modifiers add up to less than 0: the GM may allow a reroll.",
+      "customBackground": "Custom background",
+      "rollBackground": "Roll background",
+      "noBackgrounds": "No backgrounds found. Import the PDF to pick one, or type a name and its skills.",
+      "hitDie": "Hit die",
+      "classSkills": "Class skills",
+      "prime": "Raise a prime attribute to 14",
+      "wealth": {
+        "average": "no change",
+        "struggling": "one more skill pick",
+        "affluent": "start with 10 Madness"
+      },
+      "finish": "Create character",
+      "rolledAttributes": "Attributes (3d6 in order)",
+      "done": "New character",
+      "added": "Added",
+      "badArray": "The attribute array is not valid."
+    },
+    "SkillRaised": "Skill raised",
+    "UntrainedShort": "untrained",
+    "SkillPointsSpent": "{n} skill points spent, {left} left",
+    "DisciplineLearned": "Discipline learned",
+    "DisciplineMastered": "Discipline mastered",
+    "MasterCost": "+{madness} Madness",
+    "MasterCostExpertise": "+{madness} Madness and 1 Expertise lost for good",
+    "MasterConfirm": "Master level {level}? Cost: {cost}. A mastered level costs nothing to use.",
+    "Or": "or",
+    "LearnSpell": "Learn spell",
+    "LearnSpellHint": "Int/Occult against {dc}. Any attempt costs 1 Madness; a success costs {level} Madness more.",
+    "TeacherOccult": "Teacher's Occult level (0 for a book)",
+    "SpellLearned": "The spell is learned.",
+    "SpellNotLearned": "Not learned from this book or teacher until one of you raises Occult.",
+    "MulticlassMissing": "A level of {cls} needs these skills at level-0 or better: {skills}. Level up anyway?",
+    "BonusSkills": "Bonus skills",
+    "BonusSkillsHint": "Add the class bonus skills of a new character",
+    "Buy": "Raise to level {level}: {cost} skill points",
+    "BuySpecialty": "Learn a specialty at level {level}: {cost} skill points",
+    "BuyMax": "At the maximum skill level ({max})",
+    "LevelUntrainedHint": "-1 = untrained",
+    "SkillExists": "{name} is already on the sheet.",
+    "LearnDisciplineHint": "Learn: 1 skill point and 5 Madness (you can spend ahead from the next level). Innate: add it at level-0 for free (only at character creation, if the GM allows).",
+    "LearnDiscipline": "Learn",
+    "AddInnate": "Innate (free)",
+    "LearnSpellDropHint": "Learn: roll Int/Occult against {level} + 6, and pay Madness. Known: add it without a roll.",
+    "AddKnown": "Already known",
+    "RaiseDiscipline": "Raise one level (class skill cost)",
+    "MasterDiscipline": "Master the next level",
+    "LearnHint": "Drop a spell or discipline from a compendium on the sheet to learn it.",
+    "SaveHint": "Click a save to roll it. Shift-click skips the dialog."
   }
 }
