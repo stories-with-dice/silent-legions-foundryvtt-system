@@ -87,7 +87,9 @@ function checkKeeperTables(tables) {
   assert.equal(names.size, tables.length, "table names are unique (Keeper skips a second one)");
   for (const t of tables) {
     assert.equal(t.system, "sl");
-    assert.ok(t.tag, `${t.name}: tag`);
+    assert.equal(t.origin, "Silent Legions", `${t.name}: origin`);
+    assert.deepEqual(t.settings, ["Modern", "Horror"], `${t.name}: settings`);
+    assert.ok(["Encounter", "Entity", "Location", "Adventure", "Group", "Other"].includes(t.output), `${t.name}: output ${t.output}`);
     assert.doesNotMatch(t.name, /[[\]]/, `${t.name}: no [ ] in a name`);
     const lines = t.source.split("\n").filter(l => l && !l.startsWith("#"));
     const [, n, sides] = lines[0].match(/^(\d*)d(\d+)$/) ?? [];
@@ -111,7 +113,7 @@ test("toKeeperPack writes the random tables in Keeper's table format", () => {
   const traits = pack.tables.find(t => t.name.endsWith("Pantheon Traits"));
   assert.match(traits.source, /^# .*\n1d20\n1: Pantheon Traits 1\n2: /);
   const pantheon = pack.tables.find(t => t.name === "Pantheon");
-  assert.equal(pantheon.tag, "Generators");
+  assert.equal(pantheon.output, "Group");
   assert.match(pantheon.source, /\n1d1\n1: Number of Major Deities: \[[^\]]+\]; Pantheon Traits: \[[^\]]+\]\n$/);
   checkKeeperTables(pack.tables.filter(t => !t.source.includes("[undefined]")));
   assert.ok(!pack.compendium.some(e => /^(Generator|Table)/.test(e.source)), "tables are not Compendium entries");
@@ -223,4 +225,14 @@ test("book: Keeper tables parse, cover their die, and every lookup names a table
   const pack = toKeeperPack(await book());
   assert.equal(pack.tables.length, 303);
   checkKeeperTables(pack.tables);
+  const output = name => pack.tables.find(t => t.name === name)?.output;
+  const expected = {
+    "Alien Race": "Entity", "Outer God": "Entity", "One-Roll Actor": "Entity", "Secret Adept": "Entity", "Mythos Aberration": "Entity", "Monster Twist": "Entity",
+    "Grim Histories: How Long Have They Been Here?": "Entity",
+    Cult: "Group", "Cult Name": "Group", Pantheon: "Group", "Minions and Names: Group": "Group",
+    Kelipah: "Location", "Location Tags: Tag": "Location", "Establish Basic Traits: The Terrain is…": "Location",
+    "Adventure Template": "Adventure", "Scene Challenge": "Adventure", "One-Roll Crime": "Adventure", "Hook Scenes: The Hook": "Adventure",
+    "Dark Sorcery": "Other", "Occult Grimoire": "Other", "Magical Weapon": "Other", Poison: "Other", "Lovecraftian Name": "Other"
+  };
+  for (const [name, out] of Object.entries(expected)) assert.equal(output(name), out, name);
 });

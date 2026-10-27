@@ -24,9 +24,10 @@ const data = {
 };
 const pack = toKeeperPack(data);
 pack.pack.name = "Silent Legions (test fixture)";
+const meta = { origin: "Silent Legions", settings: ["Modern", "Horror"], system: "sl" };
 pack.tables = [
-  { name: "Test: Omen", tag: "Test Tables", system: "sl", source: "# Test table\n1d4\n1: A cold wind\n2: A dead bird\n3-4: Nothing\n" },
-  { name: "Test: Place", tag: "Test Tables", system: "sl", source: "1d2\n1: A cellar\n2: A church\n" },
-  { name: "Test Generator", tag: "Generators", system: "sl", source: "# Rolls on each\n1d1\n1: Omen: [Test: Omen]; Place: [Test: Place]\n" }
+  { name: "Test: Omen", ...meta, output: "Other", source: "# Test table\n1d4\n1: A cold wind\n2: A dead bird\n3-4: Nothing\n" },
+  { name: "Test: Place", ...meta, output: "Location", source: "1d2\n1: A cellar\n2: A church\n" },
+  { name: "Test Generator", ...meta, output: "Adventure", source: "# Rolls on each\n1d1\n1: Omen: [Test: Omen]; Place: [Test: Place]\n" }
 ];
 fs.writeFileSync(process.argv[2], JSON.stringify(pack, null, 1) + "\n");

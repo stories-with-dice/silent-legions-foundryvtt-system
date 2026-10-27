@@ -152,7 +152,10 @@ Keeper adds to the Silent Legions system:
 - 303 tables in the Tables tab: the 243 book and helper tables, and the 60 generators (master
   tables) that roll on them. A generator's result is an outline: one line per sub-table
   ("Need: …"), and a generator step is indented under its label ("Effect", then its effect and
-  word). Click a part of the result, or a label, to roll only that part again.
+  word). Click a part of the result, or a label, to roll only that part again. Each table has
+  the Source "Silent Legions", the settings Modern and Horror, and an Output for Keeper's
+  filters: Entity (aliens, gods, NPCs, monsters), Group (cults, pantheons), Location (Kelipot,
+  location tags), Adventure (scenes, templates, crimes), or Other (sorcery, artifacts, names).
 
 Keeper has no built-in Silent Legions data, so this pack is its only source. Keeper never
 replaces anything during a pack import: it skips an entry with the same name and category, a

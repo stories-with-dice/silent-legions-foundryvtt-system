@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- RPG Keeper pack: each table has Keeper's filter fields: `origin` "Silent Legions", `settings`
+  `["Modern", "Horror"]`, and an `output` for what it makes (aliens, gods, NPCs, and monsters are
+  Entity; cults and pantheons are Group; Kelipot and location tags are Location; scenes and
+  adventure templates are Adventure; the rest is Other). The old `tag` (the book chapter) is gone.
 - RPG Keeper pack: the 243 book and helper tables and the 60 generators are now Keeper tables
   (a `tables` list in Keeper's table text format), so they roll in Keeper's Tables tab. They are
   no longer Compendium entries (231 entries now).

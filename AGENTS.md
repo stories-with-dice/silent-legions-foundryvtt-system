@@ -51,7 +51,10 @@ Rules for AI agents and contributors. The user guide is [README.md](README.md).
    - `toKeeperPack()` (`keeper-pack.mjs`) returns `{ pack, compendium, monsters, tables }`:
      osr_keeper's Compendium entry and Silent Legions monster shapes (abilities as
      `{ name, text }`, attacks as `2 claw +3 (1d4)`), and tables in the text format of
-     osr_keeper's `js/table-syntax.js` (master tables use `[Table name]` lookups).
+     osr_keeper's `js/table-syntax.js` (master tables use `[Table name]` lookups). Each table is
+     `{ name, origin, settings, output, system, source }`: `tableOutput(name, folder)` picks the
+     output (Encounter, Entity, Location, Adventure, Group, Other) from `OUTPUT_BY_NAME`, then
+     `OUTPUT_BY_FOLDER` (the book chapter), else Other. A new master table or chapter needs a rule.
      osr_keeper's `test/fixtures/sl-pack.json` is a small pack in this shape: regenerate it when
      the shape changes.
 

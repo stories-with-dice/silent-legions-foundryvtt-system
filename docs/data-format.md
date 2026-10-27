@@ -48,4 +48,4 @@ Notes:
 | `warnings` | Master tables or rows whose sub-table was not found |
 
 `link` is `{ kind: "background" | "delirium" | "spell" | "tag", name }`. The Foundry importer
-turns it into a document result; the Keeper pack turns it into a `[Name]` cross-link.
+turns it into a document result; the Keeper pack keeps it as plain text in a table row.

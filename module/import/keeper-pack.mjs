@@ -112,6 +112,35 @@ const range = r => (r.range[0] === r.range[1] ? `${r.range[0]}` : `${r.range[0]}
 const line = s => String(s ?? "").replace(/\s*\n\s*/g, " ").replace(/\[/g, "(").replace(/\]/g, ")").trim();
 const comment = s => (s ? `# ${line(s)}\n` : "");
 
+// Keeper's table filters (osr_keeper js/tables.js): where a table comes from,
+// its settings, and what it makes (Encounter, Entity, Location, Adventure,
+// Group, Other).
+const ORIGIN = "Silent Legions";
+const SETTINGS = ["Modern", "Horror"];
+// By table name first (masters, and book sections that make something else
+// than their chapter), then by the book chapter (`folder`). The rest is Other
+// (sorcery, artifacts, names, poisons, visions, character creation).
+const OUTPUT_BY_NAME = [
+  [/^(One-Roll Actor|Secret Adept|Mythos Aberration|Monster Twist|Outer God|Deity Mode|Alien)/, "Entity"],
+  [/^Lovecraftian Name Generator: (Region|Motive to Study|Hallmark Magic|Manner of)/, "Entity"],
+  [/^(Pantheon|Cult|Creating Gods: (Number of Major Deities|Pantheon Traits))/, "Group"],
+  [/^Kelipah/, "Location"],
+  [/^(Resolution Scene|Investigation Scene|Adventure Template|Extra Scenes|Scene Challenge|One-Roll Crime)/, "Adventure"],
+  [/^Poisons and Diseases/, "Other"]
+];
+const OUTPUT_BY_FOLDER = {
+  "Creating Gods": "Entity", "Creating Aliens": "Entity", Bestiary: "Entity",
+  "Creating Cults": "Group",
+  "Creating Kelipot": "Location", "Building Your World": "Location",
+  "Creating Adventure Templates": "Adventure"
+};
+export function tableOutput(name, folder) {
+  const rule = OUTPUT_BY_NAME.find(([re]) => re.test(name));
+  return rule ? rule[1] : OUTPUT_BY_FOLDER[folder] ?? "Other";
+}
+const keeperTable = (name, folder, source) =>
+  ({ name, origin: ORIGIN, settings: [...SETTINGS], output: tableOutput(name, folder), system: "sl", source });
+
 // Book tables and helper tables: "1d12" and one "range: text" line per result.
 // Links (spells, deliria, tags, backgrounds) stay as plain text.
 // Master tables: "Roll on each" is one 1d1 line with a [Name] lookup per
@@ -122,14 +151,14 @@ function tables(data) {
   const out = [];
   for (const t of plan.tables) {
     const rows = t.results.map(r => `${range(r)}: ${line(r.text)}`);
-    out.push({ name: t.name, tag: t.folder, system: "sl", source: `${comment(t.description)}${t.formula}\n${rows.join("\n")}\n` });
+    out.push(keeperTable(t.name, t.folder, `${comment(t.description)}${t.formula}\n${rows.join("\n")}\n`));
   }
   for (const m of plan.masters) {
     const rows = m.kind === "all"
       ? [`1: ${m.results.map(r => `${line(r.label)}: [${names.get(r.ref)}]`).join("; ")}`]
       : m.results.map(r => `${range(r)}: ${line(r.text) ? `${line(r.text)} — ` : ""}[${names.get(r.ref)}]`);
     const formula = m.kind === "all" ? "1d1" : m.formula;
-    out.push({ name: m.name, tag: m.folder, system: "sl", source: `${comment(m.description)}${formula}\n${rows.join("\n")}\n` });
+    out.push(keeperTable(m.name, m.folder, `${comment(m.description)}${formula}\n${rows.join("\n")}\n`));
   }
   return out;
 }
