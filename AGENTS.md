@@ -2,6 +2,13 @@
 
 Rules for AI agents and contributors. The user guide is [README.md](README.md).
 
+## Git workflow
+
+- Work directly on `main`. Do not create branches.
+- Do not commit, and do not ask to commit. Leave the changes in the working tree; the owner
+  reviews and commits them.
+- Do not push.
+
 ## Hard rules
 
 - **No book text in the repository.** Never commit the PDF, `output/`, or any text copied from
